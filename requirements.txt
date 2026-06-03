@@ -1,0 +1,13 @@
+Flask 
+flask-cors
+PyPDF2
+groq
+opencv-python
+numpy
+torch
+ultralytics
+facenet-pytorch
+pillow
+pandas==2.2.2
+python-dotenv
+Werkzeug

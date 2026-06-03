@@ -1,0 +1,7 @@
+node_modules/
+authentication-backend/node_modules/
+backend/venv/
+.vscode/
+.env
+backend/.env
+authentication-backend/src/.env

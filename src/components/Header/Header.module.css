@@ -1,0 +1,138 @@
+/* Header container */
+.header {
+  position: sticky; /* Makes it stay at the top while scrolling */
+  top: 0;
+  left: 0;
+  width: 95.5%; 
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background-color: rgba(235, 240, 255, 0.8);
+  backdrop-filter: blur(10px);
+  z-index: 1000; /* Ensures it stays above other elements */
+}
+
+/* Logo */
+.logo {
+  font-family: tahoma;
+  margin-right: -20px;
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: rgb(0, 153, 255);
+  cursor: pointer;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.logo:hover {
+  transform: scale(1.05);
+  color: rgb(0, 109, 181);
+}
+
+/* Navigation */
+.nav {
+  flex-grow: 1;
+  text-align: center;
+}
+
+.navList {
+  list-style: none;
+  display: flex;
+  justify-content: center;
+  gap: 4rem;
+  margin: 0;
+  padding: 0; /* Ensures the nav section grows evenly */
+}
+
+.navList li {
+  cursor: pointer;
+  color: #ffffff;
+  transition: color 0.2s ease, transform 0.3s;
+}
+
+.navList li:hover {
+  transform: scale(1.1);
+}
+
+.navItem {
+  display: inline-block;
+}
+
+.navLink {
+  text-decoration: none;
+  color: #000000;
+  font-size: 1.3rem;
+  font-weight: 600;
+  transition: color 0.3s ease-in-out;
+  transition: transform 0.3s ease, color 0.2s ease;
+}
+
+.navLink:hover {
+  color: #004dc1;
+}
+
+.logoutBtn {
+  background-color: rgb(97, 192, 255);
+  color: #000;
+  border: none;
+  padding: 0.7rem 1rem;
+  cursor: pointer;
+  border: 2px solid black;
+  border-radius: 10px;
+  margin-right: -20px;
+  transition: background-color 0.3s, transform 0.3s;
+}
+
+.loginBtn {
+  background-color: rgb(97, 192, 255);
+  color: #000;
+  border: none;
+  padding: 0.7rem 1rem;
+  cursor: pointer;
+  border: 2px solid black;
+  border-radius: 10px;
+  margin-right: -20px;
+  transition: background-color 0.3s, transform 0.3s;
+}
+
+.logoutBtn {
+  background-color: rgb(255, 89, 89);
+}
+
+.logoutBtn:hover {
+  background-color: rgb(255, 0, 0);
+  transform: scale(1.05);
+}
+
+.loginBtn:hover {
+  background-color: rgb(0, 153, 255);
+  transform: scale(1.05);
+}
+
+.clickable {
+  cursor: pointer;
+}
+
+.userInfo {
+  display: flex;
+  align-items: center;
+  margin-left: 70px;
+  position: relative; /* Ensures it's not affected by the backdrop filter */
+  z-index: 51; /* Higher than the header */
+}
+
+.profilePic {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid black;
+  margin-right: 30px;
+  margin-left: -30px;
+  position: absolute; /* Ensures it stays above the blurred background */
+  right: 50px; /* Adjust as needed */
+  top: 50%;
+  transform: translateY(-50%); /* Centers vertically */
+  z-index: 100; /* Higher than the header */
+}
+

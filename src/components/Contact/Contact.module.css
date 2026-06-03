@@ -1,0 +1,15 @@
+.sectionTitle {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 4rem;
+    text-align: center;
+  }
+  
+  .contact {
+    background: rgb(170, 221, 255);
+    padding: 2rem;
+    padding-bottom: 4rem;
+    text-align: center;
+    border: 2px solid black;
+  }
+  

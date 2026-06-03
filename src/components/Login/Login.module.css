@@ -1,0 +1,118 @@
+.loginContainer {
+  max-width: 500px;
+  margin: 50px auto;
+  padding: 40px;
+  padding-left: 80px ;
+  padding-right: 100px;
+  border: 1px solid #94bfff;
+  border-radius: 10px;
+  margin-top: -30px;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+  background-color: rgb(239, 247, 253);
+}
+
+h1 {
+  text-align: center;
+}
+
+.socialLoginContainer {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.googleLoginBtn {
+  flex: 1;
+  padding: 10px;
+  margin: 0 2px;
+  border-radius: 5px;
+  border: none;
+  margin-right: 10px;
+  margin-left: -40px;
+  cursor: pointer;
+  font-size: 16px;
+  text-align: center;
+  justify-content: center;
+  align-items: center;
+}
+
+.appleLoginBtn {
+  flex: 1;
+  padding: 10px;
+  margin: 0 2px;
+  border-radius: 5px;
+  border: none;
+  margin-right: -65px;
+  cursor: pointer;
+  font-size: 16px;
+  text-align: center;
+  justify-content: center;
+  align-items: center;
+}
+
+.googleLoginBtn {
+  background-color: #4285f4;
+  color: white;
+}
+
+.appleLoginBtn {
+  background-color: #000000;
+  color: white;
+}
+
+.googleLoginBtn:hover {
+  background-color: #285bae;
+}
+
+.appleLoginBtn:hover {
+  background-color: #393939;
+}
+
+.formGroup {
+  margin-bottom: 15px;
+}
+
+label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+input {
+  width: 132%;
+  padding: 10px;
+  margin-left: -40px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.submitBtn {
+  width: 70%;
+  padding: 10px;
+  margin-top: 10px;
+  margin-left: 50px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  background-color: #007bff;
+  color: white;
+}
+
+.submitBtn:hover {
+  opacity: 0.9;
+}
+
+.error {
+  color: red;
+  font-size: 14px;
+  margin-top: -10px;
+  margin-bottom: 10px;
+}
+
+p span {
+  color: #007bff;
+  cursor: pointer;
+  text-decoration: underline;
+}
+

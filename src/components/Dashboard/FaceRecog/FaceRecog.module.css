@@ -1,0 +1,196 @@
+/* General Page Styling */
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: rgb(170, 221, 255);
+  padding: 20px;
+  margin-top: -20px;
+}
+
+/* Main Card */
+.card {
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  width: 90%;
+  max-width: 700px;
+  text-align: center;
+}
+
+/* Title */
+.title {
+  font-size: 26px;
+  font-weight: bold;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+/* Section Titles */
+.sectionTitle {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Upload Section */
+.uploadSection {
+  margin-top: 20px;
+  padding: 20px;
+  border-radius: 10px;
+  background: #f9f9f9;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* File Input Container */
+.fileInputContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+  width: 50%;
+  margin-left: 200px;
+  margin-bottom: 5px;
+}
+
+/* File Input */
+.fileInput {
+  border: 1px solid #ccc;
+  padding: 10px;
+  border-radius: 5px;
+  background: white;
+}
+
+/* Buttons */
+.button {
+  padding: 6px 11px;
+  border: none;
+  border-radius: 5px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+  margin-left: 330px;
+  margin-top: -47px;
+}
+
+.buttonPrimary {
+  background: #007bff;
+  color: white;
+}
+
+.buttonPrimary:hover {
+  background: #0056b3;
+}
+
+.buttonSuccess {
+  background: #28a745;
+  color: white;
+  margin-top: 10px;
+}
+
+.buttonSuccess:hover {
+  background: #218838;
+}
+
+.buttonDanger {
+  background: #dc3545;
+  color: white;
+  margin-top: 10px;
+}
+
+.buttonDanger:hover {
+  background: #c82333;
+}
+
+/* Status Message */
+.statusMessage {
+  margin-top: 10px;
+  font-weight: bold;
+}
+
+.success {
+  color: green;
+}
+
+.error {
+  color: red;
+}
+
+/* Webcam Section */
+.webcamSection {
+  margin-top: 25px;
+  padding: 20px;
+  border-radius: 10px;
+  background: #f9f9f9;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Webcam Header */
+.webcamHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+/* Video Feed */
+.videoContainer {
+  display: flex;
+  justify-content: center;
+  margin-top: 15px;
+}
+
+.videoFeed {
+  width: 100%;
+  max-width: 500px;
+  border-radius: 10px;
+  border: 3px solid #007bff;
+}
+
+/* Attendance Grid */
+.attendanceGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 15px;
+  margin-top: 15px;
+}
+
+/* Attendance Cards */
+.attendanceCard {
+  background: #ffffff;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  border-left: 4px solid #007bff;
+}
+
+/* Attendance Text */
+.studentRoll {
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+}
+
+.studentStatus {
+  font-size: 16px;
+  font-weight: bold;
+  color: green;
+}
+
+.studentTime {
+  font-size: 14px;
+  color: #555;
+}
+
+/* No Attendance */
+.noAttendance {
+  text-align: center;
+  font-style: italic;
+  color: #666;
+}

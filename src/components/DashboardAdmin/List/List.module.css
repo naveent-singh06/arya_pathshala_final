@@ -1,0 +1,72 @@
+.container {
+    max-width: 1200px;
+    margin:  auto;
+    margin-top: 10px;
+    padding: 50px;
+    background: #add5ff;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    text-align: center;
+
+  }
+  
+  .title {
+    margin-bottom: 30px;
+    margin-top: -40px;
+    font-size: 34px;
+    color: #333;
+  }
+  
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 50px;
+  }
+  
+  .card {
+    margin-left: 70px;
+    background: #f9f9f9;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    padding: 10px;
+    overflow: hidden;
+    transition: transform 0.2s;
+    width: 70%;
+    height: 76vh;
+  }
+  
+  .card:hover {
+    transform: scale(1.05);
+  }
+  
+  .photo {
+    width: 80%;
+    height: 400px; /* Covers upper half */
+    object-fit:contain;
+  }
+  
+  .info {
+    margin-top: -40px;
+    padding: 10px;
+  }
+  
+  .info h3 {
+    margin: 10px 0;
+    font-size: 28px;
+    color: #222;
+  }
+  
+  .info p {
+    margin: 5px 0;
+    font-size: 18px;
+    color: #555;
+  }
+  
+  /* Responsive: Stack cards in a single column on small screens */
+  @media (max-width: 600px) {
+    .grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  
