@@ -1,25 +1,21 @@
-// src/firebase.js
-import { initializeApp } from "firebase/app"; 
-import { getAuth } from "firebase/auth"; 
- 
-const firebaseConfig = { 
-  apiKey: process.env.REACT_APP_FIREBASE_API_KEY, 
-  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN, 
-  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID, 
-  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET, 
-  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID, 
-  appId: process.env.REACT_APP_FIREBASE_APP_ID, 
-  measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID, 
-}; 
- 
-// Initialize Firebase 
-const app = initializeApp(firebaseConfig); 
- 
-// Get Auth instance 
-const auth = getAuth(app); 
-console.log(
-  "Firebase API Key Available:",
-  Boolean(process.env.REACT_APP_FIREBASE_API_KEY)
-);
- 
+import { initializeApp } from "firebase/app";
+import { getAuth } from "firebase/auth";
+
+const firebaseConfig = {
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
+  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.REACT_APP_FIREBASE_APP_ID,
+  measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID,
+};
+
+console.log("API key exists:", Boolean(firebaseConfig.apiKey));
+console.log("API key length:", firebaseConfig.apiKey?.length);
+console.log("Firebase Project:", firebaseConfig.projectId);
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
 export { auth };
