@@ -26,7 +26,7 @@ const Header = ({ user }) => {
     <header className={styles.header}>
       {/* Logo with Home navigation */}
       <div className={`${styles.logo} ${styles.clickable}`} onClick={handleHomeClick}>
-        NeuraClass
+        ARYA PATHSHALA
       </div>
 
       {/* Navigation Links */}

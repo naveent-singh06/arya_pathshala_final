@@ -29,7 +29,7 @@ const Dashboard = () => {
       {/* Sidebar */}
       <aside className={styles.sidebar}>
         <a href="/">
-        <div className={styles.logo}>NeuraClass</div>
+        <div className={styles.logo}>ARYA PATHSHALA</div>
         </a>
         <hr style={{width:"100%"}}></hr>
         <nav className={styles.nav}>

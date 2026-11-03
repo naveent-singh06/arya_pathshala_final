@@ -45,7 +45,7 @@ const Testimonials = () => {
     <section className={styles.testimonialSection}>
       <h2 className={styles.title}>Don't take it from us</h2>
       <p className={styles.description}>
-        See what our users have to say about NeuraClass.
+        See what our users have to say about ARYA PATHSHALA.
       </p>
 
       <div className={styles.grid}>

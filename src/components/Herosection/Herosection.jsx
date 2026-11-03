@@ -34,7 +34,7 @@ const HeroSection = () => {
           <div className={`${styles.textCenter} animate-fade-in`}>
             <div className={styles.heroContainer}>
               <h1 className={`${styles.heroTitle} animate-title`}>
-                Welcome to <span style={{ color: "rgb(0, 153, 255)" }}>NeuraClass</span>
+                Welcome to <span style={{ color: "rgb(0, 153, 255)" }}>ARYA PATHSHALA</span>
               </h1>
               <p className={`${styles.heroSubtitle} animate-subtitle`}>
                 Advanced facial recognition and crowd analysis solutions
