@@ -17,6 +17,9 @@ const app = initializeApp(firebaseConfig);
  
 // Get Auth instance 
 const auth = getAuth(app); 
-console.log(process.env.REACT_APP_FIREBASE_API_KEY);
+console.log(
+  "Firebase API Key Available:",
+  Boolean(process.env.REACT_APP_FIREBASE_API_KEY)
+);
  
 export { auth };
