@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { auth } from "./firebase";
+import { auth, firebaseConfigError } from "./firebase";
 import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "firebase/auth";
 import { useUser } from "../../UserContext"; // Import global context
 import styles from "./Login.module.css";
@@ -15,6 +15,10 @@ const Login = () => {
   const navigate = useNavigate();
 
   const handleGoogleLogin = async () => {
+    if (!auth) {
+      setError(firebaseConfigError ? firebaseConfigError.message : "Sign-in is not available right now.");
+      return;
+    }
     const provider = new GoogleAuthProvider();
     try { 
       const result = await signInWithPopup(auth, provider);
@@ -32,6 +36,7 @@ const Login = () => {
   
 
   useEffect(() => {
+    if (!auth) return undefined; // Firebase not configured: nobody can be signed in
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
     });
@@ -75,6 +80,11 @@ const Login = () => {
         <h1 style={{ textAlign: "center", marginBottom: "30px", marginLeft: "30px" }}>Log in with</h1>
         {!user ? (
           <>
+            {firebaseConfigError && (
+              <p className={styles.error} role="alert" style={{ marginTop: 0, textAlign: "center" }}>
+                {firebaseConfigError.message} Please contact the site administrator.
+              </p>
+            )}
             <div className={styles.socialLoginContainer}>
               <button onClick={handleGoogleLogin} className={styles.googleLoginBtn}>Google</button>
               <button className={styles.appleLoginBtn}>Apple</button>

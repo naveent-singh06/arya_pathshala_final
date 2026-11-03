@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from "react-router-dom";
 import { Suspense, lazy, useEffect, useState } from "react";
-import { auth } from "./components/Login/firebase";
+import { auth, firebaseConfigError } from "./components/Login/firebase";
+import ConfigNotice from "./components/ConfigNotice/ConfigNotice";
 import { onAuthStateChanged } from "firebase/auth";
 import Header from "./components/Header/Header";
 import HeroSection from "./components/Herosection/Herosection";
@@ -53,6 +54,12 @@ function AppContent() {
   const showHeader = !["/dashboard", "/dashboardadmin", "/tutor"].includes(location.pathname);
 
   useEffect(() => {
+    // Firebase not configured: nobody can be signed in, but the public site must still open.
+    if (!auth) {
+      setUser(null);
+      setIsAdmin(false);
+      return undefined;
+    }
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       console.log("User state changed:", currentUser);
       setUser(currentUser || null);
@@ -75,12 +82,30 @@ function AppContent() {
       {showHeader && <Header user={user} />}
       <Routes>
         <Route path="/" element={<HeroSection />} />
-        <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/login" replace />} />
-        <Route path="/dashboardadmin" element={user && isAdmin ? <DashboardAdmin /> : <Navigate to="/login" replace />} />
+        <Route
+          path="/dashboard"
+          element={
+            firebaseConfigError ? <ConfigNotice page="The dashboard" /> : user ? <Dashboard /> : <Navigate to="/login" replace />
+          }
+        />
+        <Route
+          path="/dashboardadmin"
+          element={
+            firebaseConfigError ? (
+              <ConfigNotice page="The admin dashboard" />
+            ) : user && isAdmin ? (
+              <DashboardAdmin />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
         <Route
           path="/tutor"
           element={
-            user ? (
+            firebaseConfigError ? (
+              <ConfigNotice page="The AI Tutor" />
+            ) : user ? (
               <Suspense fallback={<div style={loadingStyle}>ARYA PATHSHALA</div>}>
                 <Tutor user={user} isAdmin={isAdmin} />
               </Suspense>

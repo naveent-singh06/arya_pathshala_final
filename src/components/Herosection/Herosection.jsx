@@ -1,7 +1,6 @@
 import styles from "./Herosection.module.css";
-import { auth } from "../Login/firebase";
+import useAuthUser from "../Login/useAuthUser";
 import { useNavigate } from "react-router-dom";
-import { useAuthState } from "react-firebase-hooks/auth";
 import { useUser } from "../../UserContext"; // Import useUser hook
 import Features from "../Features/Features";
 import Testimonials from "../Testimonials/Testimonials";
@@ -10,7 +9,7 @@ import Contact from "../Contact/Contact";
 import Footer from "../Footer/Footer";
 
 const HeroSection = () => {
-  const [isSignedIn] = useAuthState(auth);
+  const isSignedIn = useAuthUser(); // null (not an error) when Firebase is not configured
   const { isAdmin } = useUser(); // Get isAdmin value from context
   const navigate = useNavigate();
 
