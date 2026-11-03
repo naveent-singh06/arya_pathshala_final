@@ -1,0 +1,74 @@
+rules_version = '2';
+
+// ARYA PATHSHALA - Firestore security rules (Phase 1)
+//
+// users/{uid}/chats/{chatId}                  -> AI Tutor chats (owner only)
+// users/{uid}/chats/{chatId}/messages/{msgId} -> messages of a chat (owner only)
+// tutorUsage/{uid}                            -> rate-limit counters, written ONLY by the
+//                                                server (Firebase Admin bypasses these rules)
+// Everything else is denied until a later phase adds rules for it.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    function validSubject(v) {
+      return v in ['general', 'mathematics', 'physics', 'chemistry', 'biology', 'english', 'computer-science'];
+    }
+
+    function validLevel(v) {
+      return v in ['auto', '9', '10', '11', '12', 'neet', 'jee'];
+    }
+
+    function validLanguage(v) {
+      return v in ['auto', 'english', 'hindi', 'hinglish'];
+    }
+
+    function validChatCreate(d) {
+      return d.keys().hasOnly(['title', 'subject', 'classLevel', 'language', 'preview', 'searchText', 'createdAt', 'updatedAt'])
+        && d.keys().hasAll(['title', 'subject', 'classLevel', 'language', 'createdAt', 'updatedAt'])
+        && d.title is string && d.title.size() > 0 && d.title.size() <= 100
+        && validSubject(d.subject)
+        && validLevel(d.classLevel)
+        && validLanguage(d.language)
+        && d.createdAt == request.time
+        && d.updatedAt == request.time;
+    }
+
+    function validChatUpdate(before, after) {
+      return after.diff(before).affectedKeys().hasOnly(['subject', 'classLevel', 'language', 'preview', 'searchText', 'updatedAt'])
+        && validSubject(after.subject)
+        && validLevel(after.classLevel)
+        && validLanguage(after.language)
+        && (!('preview' in after) || (after.preview is string && after.preview.size() <= 300))
+        && (!('searchText' in after) || (after.searchText is string && after.searchText.size() <= 3000))
+        && after.updatedAt == request.time;
+    }
+
+    function validMessage(d) {
+      return d.keys().hasOnly(['role', 'content', 'createdAt'])
+        && d.role in ['user', 'assistant']
+        && d.content is string && d.content.size() > 0 && d.content.size() <= 40000
+        && d.createdAt == request.time;
+    }
+
+    match /users/{uid}/chats/{chatId} {
+      allow read, delete: if isOwner(uid);
+      allow create: if isOwner(uid) && validChatCreate(request.resource.data);
+      allow update: if isOwner(uid) && validChatUpdate(resource.data, request.resource.data);
+
+      match /messages/{messageId} {
+        allow read, delete: if isOwner(uid);
+        allow create: if isOwner(uid) && validMessage(request.resource.data);
+        allow update: if false;
+      }
+    }
+
+    // Default: deny everything else (including tutorUsage from the browser).
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

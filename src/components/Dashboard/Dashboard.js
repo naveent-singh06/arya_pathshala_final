@@ -56,6 +56,11 @@ const Dashboard = () => {
                 <img style={{ marginTop: "-1px" }} src={contactICO} alt="Contact Us" className={styles.icon} /> Contact Us
               </a>
             </li>
+            <li>
+              <a href="/tutor">
+                <img style={{ marginTop: "-1px" }} src={Classroom} alt="AI Tutor" className={styles.icon} /> AI Tutor
+              </a>
+            </li>
           </ul>
         </nav>
         <div style={{marginLeft:"10px"}}><button onClick={handleSignOut} className={styles.signOutButton}>Sign Out</button></div>
@@ -78,7 +83,20 @@ const Dashboard = () => {
 
 
         {/* Feature Cards */}
-        <div className={styles.grid}> 
+        <div className={styles.grid}>
+<a href="/tutor">
+  <div className={`${styles.card} ${styles.fullWidth}`}>
+    <img src={Classroom} alt="AI Tutor" className={styles.cardImage} />
+    <div className={styles.cardContent}>
+      <h2 style={{ fontSize: "2rem" }}>AI Tutor</h2>
+      <p>Ask doubts in English, Hindi or Hinglish and get</p>
+      <p>step-by-step explanations for Class 9-12, NEET and JEE.</p>
+      <p>‎ </p>
+      <p className={styles.rightArrow}>→</p>
+    </div>
+  </div>
+</a>
+
         <a href="/facerecog">
   <div className={styles.card}>
     <img src={faceDetFeature1} alt="Face Recognition" className={styles.cardImage} />

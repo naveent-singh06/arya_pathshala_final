@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { Suspense, lazy, useEffect, useState } from "react";
 import { auth } from "./components/Login/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import Header from "./components/Header/Header";
@@ -23,6 +23,19 @@ import List from "./components/DashboardAdmin/List/List";
 import { UserProvider, useUser } from "./UserContext";
 import Footer from "./components/Footer/Footer";
 
+// Loaded on demand so the Markdown/math libraries don't slow down the other pages.
+const Tutor = lazy(() => import("./components/Tutor/Tutor"));
+
+const loadingStyle = {
+  minHeight: "100vh",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  fontWeight: 700,
+  letterSpacing: "0.04em",
+  color: "rgb(15, 69, 155)",
+};
+
 function App() {
   return (
     <UserProvider>
@@ -37,7 +50,7 @@ function AppContent() {
   const [user, setUser] = useState(undefined);
   const { isAdmin, setIsAdmin } = useUser(); // Get isAdmin from UserContext
   const location = useLocation();
-  const showHeader = !["/dashboard", "/dashboardadmin"].includes(location.pathname);
+  const showHeader = !["/dashboard", "/dashboardadmin", "/tutor"].includes(location.pathname);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -55,7 +68,7 @@ function AppContent() {
     return () => unsubscribe();
   }, [setIsAdmin]);
 
-  if (user === undefined) return <div>Loading...</div>;
+  if (user === undefined) return <div style={loadingStyle}>ARYA PATHSHALA</div>;
 
   return (
     <>
@@ -64,6 +77,18 @@ function AppContent() {
         <Route path="/" element={<HeroSection />} />
         <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/login" replace />} />
         <Route path="/dashboardadmin" element={user && isAdmin ? <DashboardAdmin /> : <Navigate to="/login" replace />} />
+        <Route
+          path="/tutor"
+          element={
+            user ? (
+              <Suspense fallback={<div style={loadingStyle}>ARYA PATHSHALA</div>}>
+                <Tutor user={user} isAdmin={isAdmin} />
+              </Suspense>
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
         <Route path="/testimonials" element={<Testimonials />} />
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
