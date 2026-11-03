@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { Upload, Camera, UserCheck } from "lucide-react";
 import styles from "./FaceRecog.module.css";
@@ -10,7 +10,7 @@ const FaceRecog = () => {
   const [uploadStatus, setUploadStatus] = useState("");
   const [showWebcam, setShowWebcam] = useState(false);
   const [attendance, setAttendance] = useState({});
-  const webcamRef = useRef(null);
+
 
   const handleFileChange = (event) => {
     if (event.target.files && event.target.files[0]) {
