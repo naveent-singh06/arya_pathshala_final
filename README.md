@@ -11,6 +11,9 @@ ARYA PATHSHALA is an AI-powered learning platform for students of Class 9-12 and
 See [`docs/PHASE1_SETUP.md`](docs/PHASE1_SETUP.md) for the Firebase, AI provider and Vercel configuration,
 and [`.env.example`](.env.example) for the list of environment variable names (never commit real values).
 
+The website and `/api/tutor` deploy on Vercel. The Python backend in `backend/` (install with
+`pip install -r backend/requirements.txt`) is deployed separately; see the architecture section in that guide.
+
 ## Commands
 
 ```

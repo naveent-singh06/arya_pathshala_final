@@ -28,7 +28,22 @@ to `index.html` and allows `/api/tutor` up to 60 seconds.
 `npm start` only serves the website. To run the website **and** `/api/tutor` together use
 `npx vercel dev` with a `.env.local` file made from `.env.example`.
 
-## 5. Tests
+## 5. Deployment architecture (what runs where)
+- **Vercel** hosts only the React website and the `/api/tutor` serverless function (Node 22).
+  `vercel.json` pins the build (`npm ci`, `npm run build`, output `build/`) and `.vercelignore`
+  keeps the Python backend and other non-website folders out of the Vercel build.
+- **The Python backend** (`backend/`: face-recognition attendance, grading assistant, study planner)
+  is **not** deployed by Vercel. Its dependencies (torch, ultralytics, opencv...) are several GB, and face
+  recognition reads a camera on the server. Its package list is `backend/requirements.txt`
+  (moved from the repository root so Vercel no longer detects a Python project and installs it).
+  Run it on a separate host: `pip install -r backend/requirements.txt` then `python backend/app.py`
+  (use Python 3.11 or 3.12; `pandas==2.2.2` does not build on newer Python versions).
+- **Not connected yet:** the website still calls the Python backend at `http://localhost:5000`
+  (FaceRecog, Planner and Grading Assistant). Those three features work only when the backend runs on the
+  same computer as the browser, until a backend URL setting is added in a later step.
+- `authentication-backend/` (Node + MongoDB) is unused by the website and is not deployed.
+
+## 6. Tests
 - `npm run test:api` - server API tests (no network or keys needed).
 - `CI=true npm test` - React tests.
 - `npm run build` - production build.
