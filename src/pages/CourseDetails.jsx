@@ -44,7 +44,7 @@ export default function CourseDetails() {
           <Link to="/courses">Courses</Link> / <Link to={`/courses/${course.categoryId}`}>{category.title}</Link> / <span aria-current="page">{course.title}</span>
         </nav>
 
-        <header className="ap-card ap-coursehead">
+        <header className="ap-card ap-coursehead ap-wm">
           <div className="ap-row ap-row--wrap">
             <span className="ap-badge">{category.title}</span>
             <span className="ap-badge">Demo content</span>

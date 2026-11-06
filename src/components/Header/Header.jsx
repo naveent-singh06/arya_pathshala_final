@@ -5,15 +5,18 @@ import { auth } from '../Login/firebase';
 import { CATEGORIES } from '../../data/categories';
 import defaultAvatar from './avatar-icon.png';
 
-// Original Arya Pathshala mark: an open book under a rising sun.
-export function BrandMark({ size = 34 }) {
+// The official Arya Pathshala logo. The artwork has a black background, so it is always shown
+// as a square tile (original aspect ratio, never stretched) rather than on a light surface.
+export function BrandMark({ size = 40 }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" aria-hidden="true" focusable="false">
-      <rect width="48" height="48" rx="12" fill="#0f459b" />
-      <circle cx="24" cy="17" r="6" fill="#f4a300" />
-      <path d="M8 36c5-3 11-3 16 1 5-4 11-4 16-1V23c-5-3-11-3-16 1-5-4-11-4-16-1z" fill="#fff" />
-      <path d="M24 24v13" stroke="#0f459b" strokeWidth="2" />
-    </svg>
+    <img
+      className="ap-logo"
+      src="/assets/arya-pathshala-logo.jpeg"
+      width={size}
+      height={size}
+      alt=""
+      decoding="async"
+    />
   );
 }
 

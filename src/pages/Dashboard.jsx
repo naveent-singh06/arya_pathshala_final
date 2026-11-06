@@ -9,7 +9,9 @@ import { featuredCourse } from '../data/continueLearning';
 import { courseProgress } from '../data/learnerState';
 import ContinueCard from '../components/learn/ContinueCard';
 import RecentActivity from '../components/learn/RecentActivity';
-import { Avatar, ProgressBar, DemoNote, EmptyState } from '../components/learn/shared';
+import { LogoWatermark } from '../components/learn/BrandBackground';
+import { CATEGORIES } from '../data/categories';
+import { accentStyle, Avatar, ProgressBar, DemoNote, EmptyState } from '../components/learn/shared';
 
 const QUICK = [
   { to: '/study-material', label: 'Notes & PDFs', icon: FileText },
@@ -34,21 +36,23 @@ export default function Dashboard() {
   const myTeachers = (myTeacherIds.length ? myTeacherIds : TEACHERS.map((t) => t.id)).map(getTeacher).filter(Boolean);
   const allLectures = enrolled.flatMap((c) => courseLectures(c));
   const overall = courseProgress(state, allLectures.map((l) => l.id));
-  const upcoming = TESTS.filter((t) => !state.results[t.id]).slice(0, 3);
+  const pending = TESTS.filter((t) => !state.results[t.id]);
+  const upcoming = pending;
 
   return (
     <div className="ap-stack" style={{ gap: 22 }}>
-      <section className="ap-card ap-welcome">
-        <h1>Welcome, {name}</h1>
-        <p>{enrolled.length ? 'Pick up where you left off.' : 'Enroll in a course to start tracking your progress.'}</p>
-      </section>
+      <LogoWatermark as="section" className="ap-card ap-welcome">
+        <h1>Welcome Back, {name}!</h1>
+        <p className="ap-tagline">Your Dreams, Our Guidance.</p>
+        <p>{enrolled.length ? 'Small steps every day add up. Pick up where you left off.' : 'Every great result starts with one lecture. Enroll in a course to begin.'}</p>
+      </LogoWatermark>
       <DemoNote>Courses, lectures and quizzes here are sample content. Your progress is saved in this browser only, not on a server.</DemoNote>
 
       <div className="ap-stats">
-        <div className="ap-card ap-stat"><strong>{enrolled.length}</strong><span>Enrolled courses</span></div>
-        <div className="ap-card ap-stat"><strong>{overall.done}</strong><span>Lectures completed</span></div>
-        <div className="ap-card ap-stat"><strong>{overall.percent}%</strong><span>Overall progress</span></div>
-        <div className="ap-card ap-stat"><strong>{Object.keys(state.results).length}</strong><span>Quizzes attempted</span></div>
+        <div className="ap-card ap-stat"><strong>{enrolled.length}</strong><span>My courses</span></div>
+        <div className="ap-card ap-stat"><strong>{overall.percent}%</strong><span>Learning progress</span></div>
+        <div className="ap-card ap-stat"><strong>{overall.done}</strong><span>Completed lectures</span></div>
+        <div className="ap-card ap-stat"><strong>{upcoming.length}</strong><span>Upcoming tests (quizzes to take)</span></div>
       </div>
 
       {featured ? (
@@ -59,7 +63,20 @@ export default function Dashboard() {
         </EmptyState>
       )}
 
-      <section aria-label="Quick access">
+      <section aria-labelledby="dash-explore">
+        <h2 id="dash-explore" style={{ fontSize: '1.3rem', marginBottom: 12 }}>Explore courses</h2>
+        <div className="ap-explore">
+          {CATEGORIES.map((c) => (
+            <Link key={c.id} to={`/courses/${c.id}`} className="ap-card" style={accentStyle(c.accent)}>
+              <strong>{c.title}</strong>
+              <span>{c.audience}</span>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      <section aria-labelledby="dash-resources">
+        <h2 id="dash-resources" style={{ fontSize: '1.3rem', marginBottom: 12 }}>Study resources</h2>
         <div className="ap-quicklinks">
           {QUICK.map(({ to, label, icon: Icon }) => (
             <Link key={to} to={to} className="ap-card ap-quicklink"><Icon size={24} aria-hidden="true" />{label}</Link>
@@ -113,7 +130,7 @@ export default function Dashboard() {
           <p className="ap-muted">Scheduled tests are not available yet. These quizzes are ready to take now.</p>
           {upcoming.length ? (
             <ul className="ap-stack">
-              {upcoming.map((t) => (
+              {upcoming.slice(0, 3).map((t) => (
                 <li key={t.id} className="ap-row ap-row--wrap" style={{ justifyContent: 'space-between' }}>
                   <span>{t.title}</span>
                   <Link className="ap-btn ap-btn--ghost ap-btn--sm" to={`/tests/${t.id}`}>Start<span className="ap-sr-only">: {t.title}</span></Link>

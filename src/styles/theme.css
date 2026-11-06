@@ -2,8 +2,8 @@
   ARYA PATHSHALA design system.
 
   Palette (named, so pages never invent a new blue):
-    ink       #0c2149  headings and strong text
-    brand     #0f459b  the existing Arya Pathshala blue (links, primary buttons)
+    ink       #14213d  headings and strong text
+    brand     #2457a7  royal blue (links, primary buttons)
     sky       #0099ff  the existing light blue (focus ring, hover accents)
     marigold  #f4a300  one warm accent, used sparingly for the main call to action
     paper     #f5f8fd  page background behind cards
@@ -13,17 +13,17 @@
 */
 
 :root {
-  --ap-ink: #0c2149;
-  --ap-text: #26344f;
-  --ap-muted: #5a6882;
-  --ap-brand: #0f459b;
-  --ap-brand-strong: #0b3679;
-  --ap-brand-soft: #e8effb;
+  --ap-ink: #14213d;
+  --ap-text: #263349;
+  --ap-muted: #667085;
+  --ap-brand: #2457a7;
+  --ap-brand-strong: #1b4587;
+  --ap-brand-soft: #eaf2ff;
   --ap-sky: #0099ff;
   --ap-marigold: #f4a300;
   --ap-marigold-strong: #dd9100;
   --ap-marigold-soft: #fff3d1;
-  --ap-paper: #f5f8fd;
+  --ap-paper: #f5f7fb;
   --ap-card: #ffffff;
   --ap-line: #e1e8f4;
   --ap-ok: #137a52;
@@ -35,12 +35,15 @@
   --ap-science-soft: #dff5ee;
   --ap-english: #c27a00;
   --ap-english-soft: #fff0cf;
-  --ap-maths: #0f459b;
+  --ap-maths: #2457a7;
   --ap-maths-soft: #e5edfb;
   --ap-physics: #6a4bd0;
   --ap-physics-soft: #ece8fb;
   --ap-chemistry: #c2410c;
   --ap-chemistry-soft: #fde9dd;
+
+  /* the seven petal colours of the official logo, used only as thin accents */
+  --ap-rainbow: linear-gradient(90deg, #8e3a9a, #2f6fc0, #1aa3b8, #7fbf2a, #f6c21c, #f08a1c, #d8312b);
 
   --ap-r-sm: 8px;
   --ap-r-md: 12px;

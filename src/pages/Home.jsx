@@ -5,6 +5,7 @@ import { CATEGORIES } from '../data/categories';
 import { TEACHERS } from '../data/teachers';
 import { coursesInCategory } from '../data/courses';
 import { TeacherCard, accentStyle } from '../components/learn/shared';
+import { ClassroomBackground } from '../components/learn/BrandBackground';
 import SiteFooter from '../components/learn/SiteFooter';
 
 const HIGHLIGHTS = [
@@ -16,35 +17,9 @@ const HIGHLIGHTS = [
 
 const CATEGORY_ICON = { 'class-9': BookOpen, 'class-10': GraduationCap, neet: Stethoscope };
 
-// Original illustration (not a photograph): a teacher at a board and a student with a book.
-function HeroArt() {
-  return (
-    <svg className="ap-hero__art" viewBox="0 0 520 420" role="img" aria-label="Illustration of a teacher at a board and a student studying">
-      <rect x="20" y="30" width="480" height="330" rx="28" fill="#e8effb" />
-      <circle cx="420" cy="90" r="44" fill="#f4a300" opacity="0.9" />
-      <rect x="60" y="70" width="250" height="150" rx="14" fill="#0f459b" />
-      <path d="M85 110h120M85 140h170M85 170h90" stroke="#fff" strokeWidth="6" strokeLinecap="round" opacity="0.85" />
-      <circle cx="270" cy="175" r="18" fill="none" stroke="#f4a300" strokeWidth="6" />
-      <rect x="60" y="226" width="250" height="10" rx="5" fill="#0c2149" opacity="0.15" />
-      {/* teacher */}
-      <circle cx="372" cy="196" r="30" fill="#f2c9a5" />
-      <path d="M334 186c4-26 56-26 62 0-14-10-48-10-62 0z" fill="#0c2149" />
-      <path d="M322 360c0-60 22-120 50-120s50 60 50 120z" fill="#0c2149" />
-      <path d="M352 244l20 30 20-30" fill="#fff" />
-      {/* student */}
-      <circle cx="170" cy="262" r="26" fill="#d9a77d" />
-      <path d="M142 254c3-26 52-26 56 0-12-9-44-9-56 0z" fill="#0c2149" />
-      <path d="M110 360c0-52 22-84 60-84s60 32 60 84z" fill="#0099ff" />
-      <path d="M118 322l52 14 52-14v38h-104z" fill="#fff" />
-      <path d="M118 322l52 14v24l-52-14zM222 322l-52 14v24l52-14z" fill="#f4a300" opacity="0.0" />
-      <rect x="60" y="348" width="400" height="14" rx="7" fill="#0c2149" opacity="0.12" />
-    </svg>
-  );
-}
-
 export default function Home() {
   return (
-    <div className="ap-scope ap-home">
+    <ClassroomBackground className="ap-scope ap-home">
       <section className="ap-hero">
         <div className="ap-container ap-hero__grid">
           <div className="ap-hero__text">
@@ -60,7 +35,9 @@ export default function Home() {
               <Link to="/tutor" className="ap-btn ap-btn--ghost">Try the AI Tutor</Link>
             </div>
           </div>
-          <HeroArt />
+          <div className="ap-hero__logo">
+            <img src="/assets/arya-pathshala-logo.jpeg" width="420" height="420" alt="Arya Pathshala: Dreams find wings here" decoding="async" />
+          </div>
         </div>
       </section>
 
@@ -121,6 +98,6 @@ export default function Home() {
         </div>
       </section>
       <SiteFooter />
-    </div>
+    </ClassroomBackground>
   );
 }

@@ -72,8 +72,11 @@ export default function LearnLayout() {
         <aside id="learn-sidebar" className={`ap-side ${drawer ? 'is-open' : ''}`} aria-label="Learning navigation">
           <div className="ap-side__top">
             <Link to="/" className="ap-brand" aria-label="Arya Pathshala home">
-              <BrandMark />
-              <span className="ap-side__label">Arya Pathshala</span>
+              <BrandMark size={44} />
+              <span className="ap-side__label ap-side__brand">
+                Arya Pathshala
+                <small>Dreams find wings here</small>
+              </span>
             </Link>
             <button type="button" className="ap-iconbtn ap-side__close" onClick={() => setDrawer(false)} aria-label="Close menu">
               <X size={20} />
@@ -100,7 +103,7 @@ export default function LearnLayout() {
           </button>
         </aside>
 
-        <div className="ap-learn__main">
+        <div className="ap-learn__main ap-brandbg">
           <div className="ap-topbar">
             <button type="button" className="ap-iconbtn ap-topbar__menu" onClick={() => setDrawer(true)} aria-label="Open menu" aria-expanded={drawer} aria-controls="learn-sidebar">
               <Menu size={22} />

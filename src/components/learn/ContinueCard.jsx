@@ -4,7 +4,7 @@ import { PlayCircle } from 'lucide-react';
 import { continueFor } from '../../data/continueLearning';
 import { lecturePath, coursePath } from '../../data/courses';
 import { getTeacher } from '../../data/teachers';
-import { ProgressBar } from './shared';
+import { ProgressBar, CourseThumb } from './shared';
 
 /** "Continue learning / next lecture" card for one course. */
 export default function ContinueCard({ course, state, heading = 'Continue learning' }) {
@@ -14,8 +14,13 @@ export default function ContinueCard({ course, state, heading = 'Continue learni
   return (
     <section className="ap-card ap-continue" aria-label={heading}>
       <div className="ap-continue__main">
-        <h2>{heading}</h2>
-        <p className="ap-continue__course">{course.title}</p>
+        <div className="ap-continue__head">
+          <div className="ap-continue__thumb"><CourseThumb course={course} /></div>
+          <div>
+            <h2>{heading}</h2>
+            <p className="ap-continue__course">{course.title}</p>
+          </div>
+        </div>
         <dl className="ap-facts">
           <div>
             <dt>Last watched</dt>

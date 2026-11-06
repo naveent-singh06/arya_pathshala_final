@@ -4,6 +4,7 @@ import { Search } from 'lucide-react';
 import { CATEGORIES, getCategory } from '../data/categories';
 import { COURSES, coursesInCategory } from '../data/courses';
 import { CourseCard, EmptyState, DemoNote } from '../components/learn/shared';
+import { ClassroomBackground } from '../components/learn/BrandBackground';
 import SiteFooter from '../components/learn/SiteFooter';
 import NotFound from './NotFound';
 
@@ -32,7 +33,7 @@ export default function CourseListing() {
   );
 
   return (
-    <div className="ap-scope ap-listing">
+    <ClassroomBackground className="ap-scope ap-listing">
       <div className="ap-container ap-section">
         <header className="ap-pagehead">
           <div>
@@ -79,6 +80,6 @@ export default function CourseListing() {
         )}
       </div>
       <SiteFooter />
-    </div>
+    </ClassroomBackground>
   );
 }
