@@ -1,75 +1,127 @@
-import React from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { auth } from "../Login/firebase"; 
-import styles from "./Header.module.css";  
-import defaultAvatar from "./avatar-icon.png"; // Ensure this path is correct
+import React, { useEffect, useRef, useState } from 'react';
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { ChevronDown, Menu, X } from 'lucide-react';
+import { auth } from '../Login/firebase';
+import { CATEGORIES } from '../../data/categories';
+import defaultAvatar from './avatar-icon.png';
+
+// Original Arya Pathshala mark: an open book under a rising sun.
+export function BrandMark({ size = 34 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+      <rect width="48" height="48" rx="12" fill="#0f459b" />
+      <circle cx="24" cy="17" r="6" fill="#f4a300" />
+      <path d="M8 36c5-3 11-3 16 1 5-4 11-4 16-1V23c-5-3-11-3-16 1-5-4-11-4-16-1z" fill="#fff" />
+      <path d="M24 24v13" stroke="#0f459b" strokeWidth="2" />
+    </svg>
+  );
+}
+
+function Dropdown({ label, children, active }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  const { pathname } = useLocation();
+
+  useEffect(() => setOpen(false), [pathname]);
+  useEffect(() => {
+    if (!open) return undefined;
+    const onDown = (e) => ref.current && !ref.current.contains(e.target) && setOpen(false);
+    const onKey = (e) => e.key === 'Escape' && setOpen(false);
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  return (
+    <div className="ap-dd" ref={ref}>
+      <button type="button" className={`ap-nav__link ${active ? 'is-active' : ''}`} aria-expanded={open} aria-haspopup="true" onClick={() => setOpen(!open)}>
+        {label} <ChevronDown size={16} aria-hidden="true" />
+      </button>
+      {open && <div className="ap-dd__menu">{children}</div>}
+    </div>
+  );
+}
 
 const Header = ({ user }) => {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const [menu, setMenu] = useState(false);
 
-  const handleLoginClick = () => {
-    navigate("/login");
-  };
-
-  const handleHomeClick = () => {
-    navigate("/");
-  };
+  useEffect(() => setMenu(false), [pathname]);
 
   const handleLogout = async () => {
-    await auth.signOut();
-    navigate("/login");
+    if (auth) await auth.signOut();
+    navigate('/login');
   };
 
-  console.log("User in Header:", user);
+  const categoryLinks = (list) =>
+    list.map((c) => (
+      <Link key={c.id} to={`/courses/${c.id}`} role="menuitem">
+        {c.title}
+      </Link>
+    ));
+
+  const nav = (
+    <>
+      <NavLink to="/" end className="ap-nav__link">Home</NavLink>
+      <Dropdown label="All Courses" active={pathname.startsWith('/courses') && !pathname.endsWith('neet')}>
+        <Link to="/courses" role="menuitem">All courses</Link>
+        {categoryLinks(CATEGORIES)}
+      </Dropdown>
+      <Dropdown label="Classes" active={/\/courses\/class-/.test(pathname)}>
+        {categoryLinks(CATEGORIES.filter((c) => c.id.startsWith('class-')))}
+      </Dropdown>
+      <NavLink to="/courses/neet" className="ap-nav__link">NEET</NavLink>
+      <NavLink to="/teachers" className="ap-nav__link">Teachers</NavLink>
+      <NavLink to="/study-material" className="ap-nav__link">Study Material</NavLink>
+      <NavLink to="/tutor" className="ap-nav__link">AI Tutor</NavLink>
+    </>
+  );
 
   return (
-    <header className={styles.header}>
-      {/* Logo with Home navigation */}
-      <div className={`${styles.logo} ${styles.clickable}`} onClick={handleHomeClick}>
-        ARYA PATHSHALA
-      </div>
-
-      {/* Navigation Links */}
-      <nav className={styles.nav}>
-        <ul className={styles.navList}>
-          <li className={styles.navItem}>
-            <Link to="/" className={styles.navLink}>Home</Link>
-          </li>
-          <li className={styles.navItem}>
-            <Link to="/features" className={styles.navLink}>Features</Link>
-          </li>
-          <li className={styles.navItem}>
-            <Link to="/tutor" className={styles.navLink}>AI Tutor</Link>
-          </li>
-          <li className={styles.navItem}>
-            <Link to="/testimonials" className={styles.navLink}>Testimonials</Link>
-          </li>
-          <li className={styles.navItem}>
-            <Link to="/about" className={styles.navLink}>About</Link>
-          </li>
-          <li className={styles.navItem}>
-            <Link to="/contact" className={styles.navLink}>Contact</Link>
-          </li>
-        </ul>
-      </nav>
-
-      {/* User Profile or Login Button */}
-      {user === undefined ? null : user ? (
-        <div className={styles.userInfo}>
-          <img 
-            src={user.photoURL || defaultAvatar} 
-            alt="User Profile" 
-            className={styles.profilePic} 
-            onError={(e) => e.target.src = defaultAvatar} // Fallback image if loading fails
-          />
-          <button className={styles.logoutBtn} onClick={handleLogout}>
-            Logout
+    <header className="ap-scope ap-header">
+      <div className="ap-container ap-header__bar">
+        <Link to="/" className="ap-brand" aria-label="Arya Pathshala home">
+          <BrandMark />
+          <span>Arya Pathshala</span>
+        </Link>
+        <nav className="ap-nav ap-nav--desktop" aria-label="Main">{nav}</nav>
+        <div className="ap-header__auth">
+          {user ? (
+            <>
+              <Link to="/dashboard" className="ap-btn ap-btn--primary ap-btn--sm">
+                <img src={user.photoURL || defaultAvatar} alt="" className="ap-header__pic" onError={(e) => (e.target.src = defaultAvatar)} />
+                Dashboard
+              </Link>
+              <button type="button" className="ap-btn ap-btn--ghost ap-btn--sm ap-hide-sm" onClick={handleLogout}>
+                Log out
+              </button>
+            </>
+          ) : user === undefined ? null : (
+            <Link to="/login" className="ap-btn ap-btn--primary ap-btn--sm">Log in</Link>
+          )}
+          <button type="button" className="ap-iconbtn ap-header__burger" aria-expanded={menu} aria-controls="mobile-nav" aria-label={menu ? 'Close menu' : 'Open menu'} onClick={() => setMenu(!menu)}>
+            {menu ? <X size={22} /> : <Menu size={22} />}
           </button>
         </div>
-      ) : (
-        <button className={styles.loginBtn} onClick={handleLoginClick}>
-          Register / Login
-        </button>
+      </div>
+      {menu && (
+        <nav id="mobile-nav" className="ap-nav ap-nav--mobile" aria-label="Main mobile">
+          <NavLink to="/" end className="ap-nav__link">Home</NavLink>
+          <Link to="/courses" className="ap-nav__link">All Courses</Link>
+          {CATEGORIES.map((c) => (
+            <Link key={c.id} to={`/courses/${c.id}`} className="ap-nav__link ap-nav__link--sub">{c.title}</Link>
+          ))}
+          <NavLink to="/teachers" className="ap-nav__link">Teachers</NavLink>
+          <NavLink to="/study-material" className="ap-nav__link">Study Material</NavLink>
+          <NavLink to="/tutor" className="ap-nav__link">AI Tutor</NavLink>
+          {user && (
+            <button type="button" className="ap-nav__link ap-nav__btn" onClick={handleLogout}>Log out</button>
+          )}
+        </nav>
       )}
     </header>
   );

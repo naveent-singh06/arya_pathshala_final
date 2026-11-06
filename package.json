@@ -6,6 +6,8 @@
     "node": "22.x"
   },
   "dependencies": {
+    "@fontsource-variable/bricolage-grotesque": "^5.3.0",
+    "@fontsource/hind": "^5.3.0",
     "axios": "^1.7.9",
     "brcypt": "^1.0.1",
     "chart.js": "^4.4.8",

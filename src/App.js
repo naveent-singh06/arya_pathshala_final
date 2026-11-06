@@ -4,8 +4,24 @@ import { auth, firebaseConfigError } from "./components/Login/firebase";
 import ConfigNotice from "./components/ConfigNotice/ConfigNotice";
 import { onAuthStateChanged } from "firebase/auth";
 import Header from "./components/Header/Header";
-import HeroSection from "./components/Herosection/Herosection";
-import Dashboard from "./components/Dashboard/Dashboard";
+import Home from "./pages/Home";
+import CourseListing from "./pages/CourseListing";
+import LearnLayout from "./components/learn/LearnLayout";
+import Dashboard from "./pages/Dashboard";
+import MyCourses from "./pages/MyCourses";
+import Batches from "./pages/Batches";
+import Progress from "./pages/Progress";
+import Study from "./pages/Study";
+import LecturesHub from "./pages/LecturesHub";
+import TeacherList from "./pages/TeacherList";
+import TeacherProfile from "./pages/TeacherProfile";
+import StudyMaterial from "./pages/StudyMaterial";
+import Practice from "./pages/Practice";
+import Tests from "./pages/Tests";
+import CourseDetails from "./pages/CourseDetails";
+import CourseLectures from "./pages/CourseLectures";
+import LecturePlayer from "./pages/LecturePlayer";
+import NotFound from "./pages/NotFound";
 import DashboardAdmin from "./components/DashboardAdmin/DashboardAdmin";
 import Testimonials from "./components/Testimonials/Testimonials";
 import Login from "./components/Login/Login";
@@ -37,6 +53,16 @@ const loadingStyle = {
   color: "rgb(15, 69, 155)",
 };
 
+// Pages that draw their own navigation (the learning sidebar, the AI Tutor, the admin dashboard).
+const LEARN_PREFIXES = [
+  "/dashboard", "/my-courses", "/batches", "/lectures", "/teachers", "/study", "/study-material",
+  "/practice", "/tests", "/progress", "/course/",
+];
+function isOwnLayoutPath(pathname) {
+  if (pathname === "/dashboardadmin" || pathname === "/tutor") return true;
+  return LEARN_PREFIXES.some((prefix) => pathname === prefix.replace(/\/$/, "") || pathname.startsWith(prefix.endsWith("/") ? prefix : `${prefix}/`));
+}
+
 function App() {
   return (
     <UserProvider>
@@ -51,7 +77,7 @@ function AppContent() {
   const [user, setUser] = useState(undefined);
   const { isAdmin, setIsAdmin } = useUser(); // Get isAdmin from UserContext
   const location = useLocation();
-  const showHeader = !["/dashboard", "/dashboardadmin", "/tutor"].includes(location.pathname);
+  const showHeader = !isOwnLayoutPath(location.pathname);
 
   useEffect(() => {
     // Firebase not configured: nobody can be signed in, but the public site must still open.
@@ -75,19 +101,37 @@ function AppContent() {
     return () => unsubscribe();
   }, [setIsAdmin]);
 
+  // Signed-in-only pages: a config notice if Firebase is missing, a redirect to login otherwise.
+  const needsLogin = (element, page) =>
+    firebaseConfigError ? <ConfigNotice page={page} /> : user ? element : <Navigate to="/login" replace />;
+
   if (user === undefined) return <div style={loadingStyle}>ARYA PATHSHALA</div>;
 
   return (
     <>
       {showHeader && <Header user={user} />}
       <Routes>
-        <Route path="/" element={<HeroSection />} />
-        <Route
-          path="/dashboard"
-          element={
-            firebaseConfigError ? <ConfigNotice page="The dashboard" /> : user ? <Dashboard /> : <Navigate to="/login" replace />
-          }
-        />
+        <Route path="/" element={<Home />} />
+        <Route path="/courses" element={<CourseListing />} />
+        <Route path="/courses/:categoryId" element={<CourseListing />} />
+        <Route element={<LearnLayout />}>
+          <Route path="/dashboard" element={needsLogin(<Dashboard />, "The dashboard")} />
+          <Route path="/my-courses" element={needsLogin(<MyCourses />, "My courses")} />
+          <Route path="/progress" element={needsLogin(<Progress />, "Progress")} />
+          <Route path="/study" element={<Study />} />
+          <Route path="/batches" element={<Batches />} />
+          <Route path="/lectures" element={<LecturesHub />} />
+          <Route path="/teachers" element={<TeacherList />} />
+          <Route path="/teachers/:teacherId" element={<TeacherProfile />} />
+          <Route path="/study-material" element={<StudyMaterial />} />
+          <Route path="/practice" element={<Practice />} />
+          <Route path="/practice/:setId" element={<Practice />} />
+          <Route path="/tests" element={<Tests />} />
+          <Route path="/tests/:testId" element={<Tests />} />
+          <Route path="/course/:courseId" element={<CourseDetails />} />
+          <Route path="/course/:courseId/lectures" element={<CourseLectures />} />
+          <Route path="/course/:courseId/lecture/:lectureId" element={<LecturePlayer />} />
+        </Route>
         <Route
           path="/dashboardadmin"
           element={
@@ -129,6 +173,7 @@ function AppContent() {
         <Route path="/assistant" element={<Assistant />} />
         <Route path="/list" element={<List />} />
         <Route path="/footer" element={<Footer />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </>
   );
