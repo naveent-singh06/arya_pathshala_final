@@ -20,6 +20,17 @@
     <title>ARYA PATHSHALA</title>
     <!-- Brand images for CSS (public/assets); declared here because the bundler only resolves relative CSS urls. -->
     <style>:root{--ap-img-classroom:url(/assets/classroom-bg.svg);--ap-img-logo-wm:url(/assets/arya-pathshala-logo-transparent.png)}</style>
+    <!-- Apply the saved theme before the first paint so there is no flash. Keep in step with src/theme/themes.js. -->
+    <script>
+      (function () {
+        var t = 'white-glass';
+        try {
+          var v = window.localStorage.getItem('ap-theme');
+          if (v === 'white-glass' || v === 'midnight-dark' || v === 'cosmic-night' || v === 'neon-aurora') t = v;
+        } catch (e) {}
+        document.documentElement.setAttribute('data-ap-theme', t);
+      })();
+    </script>
   </head>
   
   <body>

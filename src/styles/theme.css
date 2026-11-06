@@ -45,6 +45,39 @@
   /* the seven petal colours of the official logo, used only as thin accents */
   --ap-rainbow: linear-gradient(90deg, #8e3a9a, #2f6fc0, #1aa3b8, #7fbf2a, #f6c21c, #f08a1c, #d8312b);
 
+  /* Theme-aware surfaces. The light values below are the White Glass theme; the other three
+     themes override them in themes.css through <html data-ap-theme="...">. */
+  --ap-deep: #14213d;            /* always-dark panels (footer, banners, video) */
+  --ap-btn: #2457a7;
+  --ap-btn-strong: #1b4587;
+  --ap-surface: #ffffff;         /* solid surface for functional UI (quiz, lists, inputs) */
+  --ap-input-bg: #ffffff;
+  --ap-header-bg: rgba(255, 255, 255, 0.9);
+  --ap-topbar-bg: rgba(255, 255, 255, 0.94);
+  --ap-side-bg: #ffffff;
+  --ap-page-bg: transparent;   /* the page colour is painted by <body>, so the galaxy canvas shows through */
+  --ap-inset: var(--ap-paper);
+  --ap-hero-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.72) 0%, rgba(234, 242, 255, 0.85) 100%);
+  --ap-progress-track: #e7edf8;
+  --ap-disabled-bg: #eef1f7;
+  --ap-disabled-text: #7a869c;
+  --ap-marigold-text: #6b4300;
+  --ap-glass: none;
+  --ap-classroom-opacity: 0.07;
+  --ap-wm-opacity: 0.1;
+  --ap-hero-grad: none;
+  /* names requested for the theme system (prefixed so they cannot clash with the per-subject
+     --accent used inside components) */
+  --ap-background: var(--ap-paper);
+  --ap-surface-elevated: var(--ap-surface);
+  --ap-text-primary: var(--ap-ink);
+  --ap-text-secondary: var(--ap-muted);
+  --ap-accent: var(--ap-brand);
+  --ap-accent-secondary: var(--ap-sky);
+  --ap-border: var(--ap-line);
+  --ap-glow: rgba(36, 87, 167, 0.25);
+  --ap-particle-color: 36, 87, 167;
+
   --ap-r-sm: 8px;
   --ap-r-md: 12px;
   --ap-r-lg: 18px;
@@ -137,11 +170,11 @@ body {
 }
 
 .ap-btn--primary {
-  background: var(--ap-brand);
+  background: var(--ap-btn);
   color: #fff;
 }
 .ap-btn--primary:hover {
-  background: var(--ap-brand-strong);
+  background: var(--ap-btn-strong);
 }
 
 .ap-btn--accent {
@@ -153,7 +186,7 @@ body {
 }
 
 .ap-btn--ghost {
-  background: #fff;
+  background: var(--ap-surface);
   color: var(--ap-brand);
   border-color: var(--ap-line);
 }
@@ -171,9 +204,9 @@ body {
 
 .ap-btn[disabled],
 .ap-btn[aria-disabled='true'] {
-  background: #eef1f7;
-  color: #7a869c;
-  border-color: #e1e6f0;
+  background: var(--ap-disabled-bg);
+  color: var(--ap-disabled-text);
+  border-color: var(--ap-line);
   cursor: not-allowed;
   transform: none;
 }
@@ -184,6 +217,8 @@ body {
   border: 1px solid var(--ap-line);
   border-radius: var(--ap-r-lg);
   box-shadow: var(--ap-shadow);
+  -webkit-backdrop-filter: var(--ap-glass);
+  backdrop-filter: var(--ap-glass);
 }
 
 .ap-chip {
@@ -194,7 +229,7 @@ body {
   padding: 0 14px;
   border-radius: 999px;
   border: 1.5px solid var(--ap-line);
-  background: #fff;
+  background: var(--ap-surface);
   color: var(--ap-text);
   font: 500 0.95rem/1 var(--ap-font-body);
   cursor: pointer;
@@ -206,8 +241,8 @@ body {
 }
 .ap-chip[aria-pressed='true'],
 .ap-chip--on {
-  background: var(--ap-brand);
-  border-color: var(--ap-brand);
+  background: var(--ap-btn);
+  border-color: var(--ap-btn);
   color: #fff;
 }
 
@@ -223,7 +258,7 @@ body {
 }
 .ap-badge--demo {
   background: var(--ap-marigold-soft);
-  color: #7a4d00;
+  color: var(--ap-marigold-text);
 }
 .ap-badge--ok {
   background: var(--ap-ok-soft);
@@ -236,7 +271,7 @@ body {
   padding: 0 14px;
   border-radius: var(--ap-r-md);
   border: 1.5px solid var(--ap-line);
-  background: #fff;
+  background: var(--ap-input-bg);
   color: var(--ap-ink);
   font: 400 1rem/1 var(--ap-font-body);
   box-sizing: border-box;
@@ -270,7 +305,7 @@ body {
   padding: 12px 14px;
   border-radius: var(--ap-r-md);
   background: var(--ap-marigold-soft);
-  color: #6b4300;
+  color: var(--ap-marigold-text);
   font-size: 0.95rem;
 }
 

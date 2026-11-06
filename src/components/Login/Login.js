@@ -69,19 +69,13 @@ const Login = () => {
   };
 
   return (
-    <div style={{
-      background: "white",
-      height: "100vh",
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center",
-    }}>
+    <div className={styles.page}>
       <div className={styles.loginContainer}>
-        <h1 style={{ textAlign: "center", marginBottom: "30px", marginLeft: "30px" }}>Log in with</h1>
+        <h1>Log in with</h1>
         {!user ? (
           <>
             {firebaseConfigError && (
-              <p className={styles.error} role="alert" style={{ marginTop: 0, textAlign: "center" }}>
+              <p className={styles.error} role="alert">
                 {firebaseConfigError.message} Please contact the site administrator.
               </p>
             )}
@@ -89,10 +83,10 @@ const Login = () => {
               <button onClick={handleGoogleLogin} className={styles.googleLoginBtn}>Google</button>
               <button className={styles.appleLoginBtn}>Apple</button>
             </div>
-            <p style={{ textAlign: "center", margin: "20px 0", fontWeight: "bold", marginLeft: "25px" }}>or</p>
+            <p className={styles.or}>or</p>
             <form onSubmit={handleSubmit} className={styles.loginForm}>
               <div className={styles.formGroup}>
-                <label htmlFor="username" style={{ marginLeft: "85px" }}>Email address</label>
+                <label htmlFor="username">Email address</label>
                 <input
                   type="text"
                   id="username"
@@ -101,7 +95,7 @@ const Login = () => {
                 />
               </div>
               <div className={styles.formGroup}>
-                <label htmlFor="password" style={{ marginLeft: "100px" }}>Password</label>
+                <label htmlFor="password">Password</label>
                 <input
                   type="password"
                   id="password"
@@ -112,19 +106,12 @@ const Login = () => {
 
               {/* Dropdown for selecting user role */}
               <div className={styles.formGroup}>
-                <label htmlFor="role" style={{ marginLeft: "100px" }}>Log in as?</label>
+                <label htmlFor="role">Log in as?</label>
                 <select
                   id="role"
                   value={role}
                   onChange={(e) => setRole(e.target.value)}
                   className={styles.dropdown}
-                  style={{
-                    display: "block",
-                    width: "100%",
-                    padding: "8px",
-                    marginTop: "5px",
-                    borderRadius: "5px",
-                  }}
                 >
                   <option value="student">Student</option>
                   <option value="admin">Admin</option>
@@ -135,11 +122,13 @@ const Login = () => {
               <button type="submit" className={styles.submitBtn}>Log In</button>
             </form>
 
-            <p style={{ textAlign: "center", marginTop: "20px", marginLeft: "25px" }}>
+            <p className={styles.switchLine}>
               Don't have an account?{" "}
               <span
-                style={{ color: "#007bff", cursor: "pointer", textDecoration: "underline" }}
+                role="link"
+                tabIndex={0}
                 onClick={handleRegister}
+                onKeyDown={(e) => { if (e.key === "Enter") handleRegister(); }}
               >
                 Sign up
               </span>

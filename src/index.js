@@ -7,7 +7,11 @@ import '@fontsource/hind/600.css';
 import './index.css';
 import './styles/theme.css';
 import './styles/learn.css';
+import './styles/themes.css';
+import './styles/galaxy.css';
 import './styles/learn.css';
+import './styles/themes.css';
+import './styles/galaxy.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 

@@ -1,17 +1,19 @@
 /* ARYA PATHSHALA AI Tutor - mobile first, uses the site's existing blue accent. */
 .page {
-  --accent: rgb(0, 153, 255);
-  --accent-dark: rgb(0, 109, 181);
-  --accent-soft: #e8f5ff;
-  --ink: #1b2430;
-  --muted: #5d6b7a;
-  --line: #dde5ee;
-  --panel: #ffffff;
-  --bg: #f4f8fc;
+  /* the colours follow the site theme (themes.css); the fallbacks are the original light values */
+  --accent: var(--ap-btn, rgb(0, 109, 181));
+  --accent-dark: var(--ap-btn-strong, rgb(0, 90, 150));
+  --accent-soft: var(--ap-brand-soft, #e8f5ff);
+  --ink: var(--ap-ink, #1b2430);
+  --muted: var(--ap-muted, #5d6b7a);
+  --line: var(--ap-line, #dde5ee);
+  --panel: var(--ap-surface, #ffffff);
+  --bg-rgb: var(--ap-bg-solid-rgb, 244, 248, 252);
+  --bg: rgb(var(--bg-rgb));
   position: fixed;
   inset: 0;
   display: flex;
-  background: var(--bg);
+  background: rgba(var(--bg-rgb), var(--ap-tutor-bg-alpha, 1));
   color: var(--ink);
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Devanagari", "Noto Sans", sans-serif;
   font-size: 16px;
@@ -117,7 +119,7 @@
   border: 1px solid var(--line);
   border-radius: 12px;
   color: var(--muted);
-  background: #fff;
+  background: var(--panel);
 }
 
 .searchBox input {
@@ -234,7 +236,7 @@
   padding: 0 10px;
   border: 1px solid var(--line);
   border-radius: 10px;
-  background: #fff;
+  background: var(--panel);
   color: var(--ink);
   font-size: 0.9rem;
 }
@@ -308,7 +310,7 @@
   padding: 0 8px;
   border: 1px solid var(--line);
   border-radius: 10px;
-  background: #fff;
+  background: var(--panel);
   color: var(--ink);
 }
 
@@ -564,7 +566,7 @@
 .markdown code {
   padding: 1px 6px;
   border-radius: 6px;
-  background: #eaf0f6;
+  background: var(--ap-code-bg, #eaf0f6);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 0.88em;
 }
@@ -682,7 +684,7 @@
 /* ---------- Composer ---------- */
 .composerWrap {
   padding: 8px 12px calc(10px + env(safe-area-inset-bottom));
-  background: linear-gradient(to top, var(--bg) 70%, rgba(244, 248, 252, 0));
+  background: linear-gradient(to top, rgba(var(--bg-rgb), 0.96) 70%, rgba(var(--bg-rgb), 0));
 }
 
 .composer {

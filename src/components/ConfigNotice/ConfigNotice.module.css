@@ -4,26 +4,26 @@
   align-items: center;
   justify-content: center;
   padding: 24px 16px;
-  background: #f4f7fc;
+  background: transparent;
   box-sizing: border-box;
 }
 
 .card {
   width: 100%;
   max-width: 560px;
-  background: #fff;
-  border: 1px solid #d9e2f1;
+  background: var(--ap-card, #fff);
+  border: 1px solid var(--ap-line, #d9e2f1);
   border-radius: 14px;
   padding: 28px 24px;
   box-shadow: 0 6px 24px rgba(15, 69, 155, 0.08);
-  color: #1c2733;
+  color: var(--ap-text, #1c2733);
   line-height: 1.55;
 }
 
 .brand {
   font-weight: 800;
   letter-spacing: 0.06em;
-  color: rgb(15, 69, 155);
+  color: var(--ap-brand, rgb(15, 69, 155));
   margin-bottom: 8px;
 }
 
@@ -39,7 +39,7 @@
 
 .admin {
   font-size: 0.92rem;
-  color: #3d4b5c;
+  color: var(--ap-muted, #3d4b5c);
 }
 
 .list {
@@ -49,7 +49,7 @@
 }
 
 .list code {
-  background: #eef3fb;
+  background: var(--ap-brand-soft, #eef3fb);
   padding: 2px 6px;
   border-radius: 4px;
   word-break: break-all;
@@ -57,7 +57,7 @@
 
 .home {
   display: inline-block;
-  background: rgb(15, 69, 155);
+  background: var(--ap-btn, rgb(15, 69, 155));
   color: #fff;
   text-decoration: none;
   font-weight: 600;
@@ -66,5 +66,5 @@
 }
 
 .home:hover {
-  background: rgb(10, 52, 120);
+  background: var(--ap-btn-strong, rgb(10, 52, 120));
 }

@@ -22,6 +22,10 @@ import CourseDetails from "./pages/CourseDetails";
 import CourseLectures from "./pages/CourseLectures";
 import LecturePlayer from "./pages/LecturePlayer";
 import NotFound from "./pages/NotFound";
+import { ThemeProvider } from "./theme/ThemeContext";
+import ThemePicker from "./theme/ThemePicker";
+import GalaxyBackground from "./components/Galaxy/GalaxyBackground";
+import FloatingSymbols from "./components/Galaxy/FloatingSymbols";
 import DashboardAdmin from "./components/DashboardAdmin/DashboardAdmin";
 import Testimonials from "./components/Testimonials/Testimonials";
 import Login from "./components/Login/Login";
@@ -50,7 +54,7 @@ const loadingStyle = {
   justifyContent: "center",
   fontWeight: 700,
   letterSpacing: "0.04em",
-  color: "rgb(15, 69, 155)",
+  color: "var(--ap-brand, rgb(15, 69, 155))",
 };
 
 // Pages that draw their own navigation (the learning sidebar, the AI Tutor, the admin dashboard).
@@ -65,11 +69,16 @@ function isOwnLayoutPath(pathname) {
 
 function App() {
   return (
-    <UserProvider>
-      <Router>
-        <AppContent />
-      </Router>
-    </UserProvider>
+    <ThemeProvider>
+      <UserProvider>
+        <Router>
+          <GalaxyBackground />
+          <FloatingSymbols />
+          <AppContent />
+          <ThemePicker />
+        </Router>
+      </UserProvider>
+    </ThemeProvider>
   );
 }
 
