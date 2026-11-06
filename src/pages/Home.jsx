@@ -35,9 +35,18 @@ export default function Home() {
               <Link to="/tutor" className="ap-btn ap-btn--ghost">Try the AI Tutor</Link>
             </div>
           </div>
-          <div className="ap-hero__logo">
-            <img src="/assets/arya-pathshala-logo.jpeg" width="420" height="420" alt="Arya Pathshala: Dreams find wings here" decoding="async" />
-          </div>
+          <figure className="ap-hero__photo">
+            <img
+              src="/assets/arya-home-hero-image.jpg"
+              srcSet="/assets/arya-home-hero-image-760.jpg 760w, /assets/arya-home-hero-image.jpg 1400w"
+              sizes="(min-width: 900px) 46vw, 92vw"
+              width="1400"
+              height="788"
+              alt="Smiling Arya Pathshala students in blue polo shirts giving a thumbs up in front of the Arya Pathshala board"
+              fetchpriority="high"
+              decoding="async"
+            />
+          </figure>
         </div>
       </section>
 
