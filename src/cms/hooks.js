@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { getIdTokenResult } from 'firebase/auth';
 import useAuthUser from '../components/Login/useAuthUser';
 import { auth } from '../components/Login/firebase';
-import { loadContent, loadSocialLinks, describeError, hasBackend } from './store';
+import { loadContent, loadSocialLinks, describeError, hasBackend, withTimeout } from './store';
 import { visibleData } from './model';
 
 const EMPTY = { courses: [], batches: [], teachers: [], dpps: [], subjects: [], chapters: [], topics: [], lectures: [], resources: [], questions: [], socialLinks: [] };
@@ -22,7 +22,7 @@ export function useAdminStatus() {
       return undefined;
     }
     setState({ status: 'loading' });
-    getIdTokenResult(user, true)
+    withTimeout(getIdTokenResult(user, true), 15000)
       .then((r) => live && setState({ status: r.claims.admin === true ? 'admin' : 'denied', user }))
       .catch(() => live && setState({ status: 'denied', user }));
     return () => {

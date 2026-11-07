@@ -26,7 +26,7 @@ export default function HubLayout() {
       return <EmptyState title="Log in to open the Study Hub" action={<Link className="ap-btn ap-btn--primary" to="/login">Log in</Link>}>Lectures, notes and practice are for signed-in students.</EmptyState>;
     }
     return (
-      <EmptyState title="The Study Hub could not load" action={<button type="button" className="ap-btn ap-btn--primary" onClick={content.reload}>Try again</button>}>{content.error}</EmptyState>
+      <EmptyState title="The Study Hub could not load" action={<button type="button" className="ap-btn ap-btn--primary" onClick={content.reload}>Try again</button>}>{content.error}{content.code ? <small className="ap-muted" style={{ display: 'block', marginTop: 8 }}>Technical detail: {content.code}</small> : null}</EmptyState>
     );
   }
   return (

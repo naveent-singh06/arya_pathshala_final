@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { getFirestore, initializeFirestore } from "firebase/firestore";
 import { getMissingFirebaseVars } from "./firebaseConfig";
 
 // Values come from the REACT_APP_FIREBASE_* environment variables (unchanged).
@@ -35,7 +35,12 @@ if (missing.length > 0) {
   try {
     const app = initializeApp(firebaseConfig);
     auth = getAuth(app);
-    db = getFirestore(app); // Used by the AI Tutor for chat history
+    try {
+      // Auto-detect long polling so Firestore also works behind proxies / school networks that block WebChannel streaming.
+      db = initializeFirestore(app, { experimentalAutoDetectLongPolling: true });
+    } catch (e) {
+      db = getFirestore(app);
+    }
   } catch (error) {
     auth = null;
     db = null;

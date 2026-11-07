@@ -20,6 +20,12 @@ It cannot be changed from the browser, localStorage or a profile field. Students
 items and cannot write content. Unpublished/draft items are readable only by admins. The old email-based
 flag in the existing dashboard is not used for the portal.
 
+## 2b. Optional demo content (safe, admin-only)
+`node scripts/seed-demo-content.js` is a dry run that shows what it would add. To write it, set `GOOGLE_APPLICATION_CREDENTIALS` to your service-account file (kept outside the repo) and run it again with `--confirm-project=<your project id>`. It adds a clearly labelled "(Demo)" Foundation Batch for Class 9, Class 10 and NEET, with subjects, chapters, topics (Class 10 Mathematics → Number Systems is the fuller example) and a few questions. It never overwrites existing documents, invents no YouTube/Drive links, and `--remove` deletes only demo documents. It does not run automatically and nothing is written to any database unless you run it.
+
+## 2c. If the Study Hub shows "could not load"
+The screen shows a "Technical detail" code: `permission-denied` = publish the latest `firestore.rules` (and log in); `unavailable` or `timeout` = Firestore is not created for the project or the network blocks it; `not-found` = create the Firestore database in the Firebase console.
+
 ## 3. Adding content (`/admin/content`)
 Student path: All courses → Course (Class 9 / Class 10 / NEET / your own) → Batch → Batch dashboard → Subject → Chapter → Topic.
 Order for the admin: (Courses, optional) → Teachers → Subjects → **Batches** (tick the subjects and teachers the batch uses) → Chapters → Topics (use "Add many topics" to paste a list) → Lectures / Notes & PDFs / DPP / Practice Questions.

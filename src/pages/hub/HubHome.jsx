@@ -29,8 +29,8 @@ export default function HubHome() {
           <Link className="ap-btn ap-btn--accent" style={{ justifySelf: 'start' }} to={`/hub/topic/${last.id}`}>Continue</Link>
         </section>
       )}
-      {!anyBatch && <EmptyState title="Batches are coming soon">Your teachers have not published any batch yet. Check back soon.</EmptyState>}
-      <div className="ap-grid-3">
+      {!anyBatch && <EmptyState title="Courses have not been published yet">Your teachers have not published any batch or course content yet. Please check back soon.</EmptyState>}
+      {anyBatch && <div className="ap-grid-3">
         {courses.map((c) => {
           const info = findCourse(data, c.id);
           const batches = data.batches.filter((b) => b.classId === c.id);
@@ -42,7 +42,7 @@ export default function HubHome() {
             </Link>
           );
         })}
-      </div>
+      </div>}
       {user && saved.length > 0 && (
         <section className="ap-card ap-panel" aria-label="Saved topics">
           <h2><Bookmark size={18} aria-hidden="true" /> Saved topics</h2>
