@@ -5,3 +5,10 @@ backend/venv/
 .env
 backend/.env
 authentication-backend/src/.env
+# Local environment files, build output and credentials
+.env.local
+.env.*.local
+build/
+.vercel/
+*firebase-adminsdk*.json
+*service-account*.json

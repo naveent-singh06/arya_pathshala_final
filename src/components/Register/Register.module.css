@@ -1,67 +1,85 @@
+/* Registration card. Colours come from the site theme (src/styles/themes.css). */
+.page {
+  min-height: calc(100vh - 72px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 32px 16px;
+  box-sizing: border-box;
+}
+
 .registerContainer {
-  max-width: 400px;
-  margin: 50px auto;
-  padding: 90px;
-  margin-top: -70px;
-  padding-bottom: 50px;
-  padding-right: 147px;
-  padding-left: 140px;
-  border: 1px solid #94bfff;;
-  border-radius: 14px;
-  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-  background-color: rgb(239, 247, 253);
+  width: 100%;
+  max-width: 440px;
+  box-sizing: border-box;
+  padding: 32px;
+  border: 1px solid var(--ap-line, #94bfff);
+  border-radius: 18px;
+  background: var(--ap-card, rgb(239, 247, 253));
+  -webkit-backdrop-filter: var(--ap-glass, none);
+  backdrop-filter: var(--ap-glass, none);
+  box-shadow: var(--ap-shadow-lift, 0 4px 10px rgba(0, 0, 0, 0.1));
+  color: var(--ap-text, #263349);
 }
 
 .registerContainer h1 {
   text-align: center;
-  margin-bottom: 40px;
-  margin-top: -30px;
-  
+  margin: 0 0 24px;
+  font-size: 1.7rem;
+  color: var(--ap-ink, #14213d);
 }
 
 .error {
-  color: red;
-  font-size: 14px;
-  margin-bottom: 10px;
+  color: var(--ap-bad, #b73333);
+  font-size: 0.95rem;
+  margin: 0 0 12px;
   text-align: center;
 }
 
-.registerForm {
-  display: flex;
-  flex-direction: column;
-}
-
-.formGroup {
-  margin-bottom: 15px;
-}
+.registerForm { display: flex; flex-direction: column; }
+.formGroup { margin-bottom: 16px; }
 
 .formGroup label {
-  margin-bottom: 5px;
-  font-weight: bold;
-  text-align: center;
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: var(--ap-ink, #14213d);
 }
 
 .formGroup input {
-  width: 215%;
-  padding: 8px;
-  margin-left: -100px;
-  margin-right: 50px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 46px;
+  padding: 10px 12px;
+  border: 1.5px solid var(--ap-line, #ccc);
+  border-radius: 10px;
+  background: var(--ap-input-bg, #fff);
+  color: var(--ap-ink, #14213d);
+  font: inherit;
+}
+
+.formGroup input:focus-visible {
+  outline: 3px solid var(--ap-glow, rgba(0, 153, 255, 0.4));
+  outline-offset: 1px;
+  border-color: var(--ap-accent, #2457a7);
 }
 
 .submitBtn {
   width: 100%;
-  padding: 10px;
-  background-color: #007bff;
-  color: white;
+  min-height: 48px;
+  margin-top: 8px;
   border: none;
-  border-radius: 5px;
+  border-radius: 12px;
   cursor: pointer;
-  margin-top: 20px;
-  transition: background-color 0.3s ease;
+  font-size: 1rem;
+  font-weight: 700;
+  background-color: var(--ap-btn, #2457a7);
+  color: #fff;
+  transition: background-color 0.2s ease;
 }
 
-.submitBtn:hover {
-  background-color: #0056b3;
+.submitBtn:hover { background-color: var(--ap-btn-strong, #1b4587); }
+
+@media (max-width: 480px) {
+  .registerContainer { padding: 22px 18px; }
 }

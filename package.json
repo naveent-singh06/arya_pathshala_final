@@ -1,29 +1,41 @@
 {
-  "name": "neuraclass",
+  "name": "arya-pathshala",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": "22.x"
+  },
   "dependencies": {
+    "@fontsource-variable/bricolage-grotesque": "^5.3.0",
+    "@fontsource/hind": "^5.3.0",
     "axios": "^1.7.9",
     "brcypt": "^1.0.1",
     "chart.js": "^4.4.8",
     "cra-template": "1.2.0",
     "firebase": "^11.3.1",
+    "firebase-admin": "^14.5.0",
     "framer-motion": "^12.4.2",
+    "katex": "^0.19.1",
     "lucide-react": "^0.475.0",
     "react": "^19.0.0",
     "react-chartjs-2": "^5.3.0",
     "react-dom": "^19.0.0",
     "react-firebase-hooks": "^5.1.1",
+    "react-markdown": "^10.1.0",
     "react-router-dom": "^7.2.0",
     "react-scripts": "5.0.1",
     "react-webcam": "^7.2.0",
+    "rehype-katex": "^7.0.1",
+    "remark-gfm": "^4.0.1",
+    "remark-math": "^6.0.0",
     "web-vitals": "^4.2.4"
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "test:api": "node --test \"tests/api/*.test.js\""
   },
   "eslintConfig": {
     "extends": [
@@ -42,7 +54,16 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3"
+  },
+  "jest": {
+    "moduleNameMapper": {
+      "^react-router-dom$": "<rootDir>/node_modules/react-router-dom/dist/index.js",
+      "^react-router$": "<rootDir>/node_modules/react-router/dist/development/index.js",
+      "^react-router/dom$": "<rootDir>/node_modules/react-router/dist/development/dom-export.js"
+    }
   }
 }
-
-

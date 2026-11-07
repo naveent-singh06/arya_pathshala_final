@@ -29,7 +29,7 @@ const Dashboard = () => {
       {/* Sidebar */}
       <aside className={styles.sidebar}>
         <a href="/">
-        <div className={styles.logo}>NeuraClass</div>
+        <div className={styles.logo}>ARYA PATHSHALA</div>
         </a>
         <hr style={{width:"100%"}}></hr>
         <nav className={styles.nav}>
@@ -62,6 +62,11 @@ const Dashboard = () => {
                 <img style={{ marginTop: "-1px" }} src={Class} alt="Schedule" className={styles.icon} /> Class Schedule
               </a>
             </li>
+            <li>
+              <a href="/tutor">
+                <img style={{ marginTop: "-1px" }} src={Classroom} alt="AI Tutor" className={styles.icon} /> AI Tutor
+              </a>
+            </li>
           </ul>
         </nav>
         <div style={{marginLeft:"10px"}}><button onClick={handleSignOut} className={styles.signOutButton}>Sign Out</button></div>
@@ -86,6 +91,19 @@ const Dashboard = () => {
 
         {/* Feature Cards */}
         <div className={styles.grid}>
+          <a href="/tutor">
+          <div className={`${styles.card} ${styles.fullWidth}`}>
+            <img src={Classroom} alt="AI Tutor" className={styles.cardImage} />
+            <div className={styles.cardContent}>
+              <h2 style={{fontSize:"2rem"}}>AI Tutor</h2>
+              <p>Ask doubts in English, Hindi or Hinglish and get</p>
+              <p>step-by-step explanations for Class 9-12, NEET and JEE.</p>
+              <p>‎ </p>
+              <p className={styles.rightArrow}>→</p>
+            </div>
+          </div>
+          </a>
+
           <a href="/facerecog">
           <div className={styles.card} >
             <img src={faceDetFeature1} alt="Video Analysis" className={styles.cardImage} />

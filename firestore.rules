@@ -1,0 +1,244 @@
+rules_version = '2';
+
+// ARYA PATHSHALA - Firestore security rules (Phase 1)
+//
+// users/{uid}/chats/{chatId}                  -> AI Tutor chats (owner only)
+// users/{uid}/chats/{chatId}/messages/{msgId} -> messages of a chat (owner only)
+// tutorUsage/{uid}                            -> rate-limit counters, written ONLY by the
+//                                                server (Firebase Admin bypasses these rules)
+// courses, batches, teachers, subjects, chapters, topics, lectures, resources, dpps, questions,
+// socialLinks                                 -> learning content managed from /admin/content.
+//                                                Only admins write; students read published items.
+// users/{uid}/hubProgress, hubNotes, enrollments -> a student's own progress, personal notes, joined batches
+// Admin = the Firebase Auth custom claim `admin: true` (set by scripts/set-admin-claim.js).
+// It is part of the signed ID token, so it cannot be edited from the browser or a profile.
+// Everything else is denied.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    function validChatSubject(v) {
+      return v in ['general', 'mathematics', 'physics', 'chemistry', 'biology', 'english', 'computer-science'];
+    }
+
+    function validLevel(v) {
+      return v in ['auto', '9', '10', '11', '12', 'neet', 'jee'];
+    }
+
+    function validLanguage(v) {
+      return v in ['auto', 'english', 'hindi', 'hinglish'];
+    }
+
+    function validChatCreate(d) {
+      return d.keys().hasOnly(['title', 'subject', 'classLevel', 'language', 'preview', 'searchText', 'createdAt', 'updatedAt'])
+        && d.keys().hasAll(['title', 'subject', 'classLevel', 'language', 'createdAt', 'updatedAt'])
+        && d.title is string && d.title.size() > 0 && d.title.size() <= 100
+        && validChatSubject(d.subject)
+        && validLevel(d.classLevel)
+        && validLanguage(d.language)
+        && d.createdAt == request.time
+        && d.updatedAt == request.time;
+    }
+
+    function validChatUpdate(before, after) {
+      return after.diff(before).affectedKeys().hasOnly(['subject', 'classLevel', 'language', 'preview', 'searchText', 'updatedAt'])
+        && validChatSubject(after.subject)
+        && validLevel(after.classLevel)
+        && validLanguage(after.language)
+        && (!('preview' in after) || (after.preview is string && after.preview.size() <= 300))
+        && (!('searchText' in after) || (after.searchText is string && after.searchText.size() <= 3000))
+        && after.updatedAt == request.time;
+    }
+
+    function validMessage(d) {
+      return d.keys().hasOnly(['role', 'content', 'createdAt'])
+        && d.role in ['user', 'assistant']
+        && d.content is string && d.content.size() > 0 && d.content.size() <= 40000
+        && d.createdAt == request.time;
+    }
+
+    match /users/{uid}/chats/{chatId} {
+      allow read, delete: if isOwner(uid);
+      allow create: if isOwner(uid) && validChatCreate(request.resource.data);
+      allow update: if isOwner(uid) && validChatUpdate(resource.data, request.resource.data);
+
+      match /messages/{messageId} {
+        allow read, delete: if isOwner(uid);
+        allow create: if isOwner(uid) && validMessage(request.resource.data);
+        allow update: if false;
+      }
+    }
+
+    // ---------- Admin content management ----------
+    function isAdmin() {
+      return request.auth != null && request.auth.token.admin == true;
+    }
+    function signedIn() {
+      return request.auth != null;
+    }
+    function okStatus(d) {
+      return d.status in ['draft', 'published', 'unpublished'];
+    }
+    function okText(d, key, max) {
+      return d[key] is string && d[key].size() > 0 && d[key].size() <= max;
+    }
+    function optText(d, key, max) {
+      return !(key in d) || (d[key] is string && d[key].size() <= max);
+    }
+    function okOrder(d) {
+      return d.order is number && d.order >= 0 && d.order < 100000;
+    }
+    function okClass(d) {
+      // class-9, class-10, neet, or the id of a course an admin created.
+      return d.classId is string && d.classId.size() > 0 && d.classId.size() <= 100;
+    }
+    function okLevel(d) {
+      // Older content used Basic/Intermediate/Advanced.
+      return d.difficulty in ['Easy', 'Medium', 'Hard', 'Basic', 'Intermediate', 'Advanced'];
+    }
+    function optUrl(d, key) {
+      return !(key in d) || d[key] == '' || (d[key] is string && d[key].matches('^https://.*') && d[key].size() <= 600);
+    }
+    function optIds(d, key) {
+      return !(key in d) || (d[key] is list && d[key].size() <= 100);
+    }
+
+    function validSubject(d) {
+      return okStatus(d) && okOrder(d) && okClass(d) && okText(d, 'name', 120) && optText(d, 'description', 2000) && optUrl(d, 'imageUrl');
+    }
+    function validChapter(d) {
+      return okStatus(d) && okOrder(d) && okClass(d) && okText(d, 'title', 200) && okText(d, 'subjectId', 100)
+        && optText(d, 'description', 2000);
+    }
+    function validTopic(d) {
+      return okStatus(d) && okOrder(d) && okClass(d) && okText(d, 'title', 200) && okText(d, 'chapterId', 100)
+        && okText(d, 'subjectId', 100) && okLevel(d) && optText(d, 'description', 2000);
+    }
+    function validLecture(d) {
+      return okStatus(d) && okOrder(d) && okClass(d) && okText(d, 'title', 200) && okText(d, 'topicId', 100)
+        && d.youtubeVideoId is string && d.youtubeVideoId.matches('^[A-Za-z0-9_-]{11}$')
+        && optText(d, 'teacherName', 120) && optText(d, 'description', 4000) && optText(d, 'duration', 30);
+    }
+    function validResource(d) {
+      return okStatus(d) && okOrder(d) && okClass(d) && okText(d, 'title', 200) && okText(d, 'topicId', 100)
+        && d.driveUrl is string && d.driveUrl.matches('^https://(drive|docs)\\.google\\.com/.*') && d.driveUrl.size() <= 600
+        && optText(d, 'description', 2000);
+    }
+    function validQuestion(d) {
+      return okStatus(d) && okClass(d) && okText(d, 'question', 2000) && okText(d, 'topicId', 100)
+        && d.options is list && d.options.size() == 4 && d.correctIndex is int && d.correctIndex >= 0 && d.correctIndex < 4
+        && okLevel(d) && optText(d, 'explanation', 4000);
+    }
+
+    function validCourse(d) {
+      return okStatus(d) && okOrder(d) && okText(d, 'title', 120) && optText(d, 'description', 2000);
+    }
+    function validBatch(d) {
+      return okStatus(d) && okOrder(d) && okClass(d) && okText(d, 'name', 120) && optText(d, 'description', 2000)
+        && optText(d, 'session', 40) && optText(d, 'duration', 60) && optUrl(d, 'coverUrl')
+        && optIds(d, 'subjectIds') && optIds(d, 'teacherIds');
+    }
+    function validTeacher(d) {
+      return okStatus(d) && okOrder(d) && okText(d, 'name', 120) && optText(d, 'subjects', 200) && optText(d, 'bio', 2000) && optUrl(d, 'photoUrl');
+    }
+    function validDpp(d) {
+      return okStatus(d) && okOrder(d) && okClass(d) && okText(d, 'title', 200) && okText(d, 'chapterId', 100)
+        && optText(d, 'topicId', 100) && optText(d, 'instructions', 4000) && optText(d, 'dueDate', 10)
+        && optUrl(d, 'externalUrl')
+        && (!('driveUrl' in d) || d.driveUrl == '' || (d.driveUrl is string && d.driveUrl.matches('^https://(drive|docs)\\.google\\.com/.*') && d.driveUrl.size() <= 600))
+        && ((d.get('driveUrl', '') != '') || (d.get('externalUrl', '') != ''));
+    }
+
+    match /courses/{id} {
+      allow read: if isAdmin() || (signedIn() && resource.data.status == 'published');
+      allow create, update: if isAdmin() && validCourse(request.resource.data);
+      allow delete: if isAdmin();
+    }
+    match /batches/{id} {
+      allow read: if isAdmin() || (signedIn() && resource.data.status == 'published');
+      allow create, update: if isAdmin() && validBatch(request.resource.data);
+      allow delete: if isAdmin();
+    }
+    match /teachers/{id} {
+      allow read: if isAdmin() || (signedIn() && resource.data.status == 'published');
+      allow create, update: if isAdmin() && validTeacher(request.resource.data);
+      allow delete: if isAdmin();
+    }
+    match /dpps/{id} {
+      allow read: if isAdmin() || (signedIn() && resource.data.status == 'published');
+      allow create, update: if isAdmin() && validDpp(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /subjects/{id} {
+      allow read: if isAdmin() || (signedIn() && resource.data.status == 'published');
+      allow create, update: if isAdmin() && validSubject(request.resource.data);
+      allow delete: if isAdmin();
+    }
+    match /chapters/{id} {
+      allow read: if isAdmin() || (signedIn() && resource.data.status == 'published');
+      allow create, update: if isAdmin() && validChapter(request.resource.data);
+      allow delete: if isAdmin();
+    }
+    match /topics/{id} {
+      allow read: if isAdmin() || (signedIn() && resource.data.status == 'published');
+      allow create, update: if isAdmin() && validTopic(request.resource.data);
+      allow delete: if isAdmin();
+    }
+    match /lectures/{id} {
+      allow read: if isAdmin() || (signedIn() && resource.data.status == 'published');
+      allow create, update: if isAdmin() && validLecture(request.resource.data);
+      allow delete: if isAdmin();
+    }
+    match /resources/{id} {
+      allow read: if isAdmin() || (signedIn() && resource.data.status == 'published');
+      allow create, update: if isAdmin() && validResource(request.resource.data);
+      allow delete: if isAdmin();
+    }
+    match /questions/{id} {
+      allow read: if isAdmin() || (signedIn() && resource.data.status == 'published');
+      allow create, update: if isAdmin() && validQuestion(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    // Footer / contact links are public, but only while active.
+    match /socialLinks/{id} {
+      allow read: if isAdmin() || resource.data.active == true;
+      allow create, update: if isAdmin()
+        && request.resource.data.platform in ['youtube', 'instagram', 'telegram', 'whatsapp', 'email', 'support']
+        && okText(request.resource.data, 'url', 500)
+        && request.resource.data.active is bool
+        && optText(request.resource.data, 'label', 100) && optText(request.resource.data, 'description', 500)
+        && request.resource.data.order is number;
+      allow delete: if isAdmin();
+    }
+
+    // A student's own study progress and personal notes.
+    match /users/{uid}/hubProgress/{topicId} {
+      allow read, delete: if isOwner(uid);
+      allow create, update: if isOwner(uid)
+        && request.resource.data.keys().hasOnly(['completed', 'bookmarked', 'lastVisited', 'title', 'attempts', 'lastScore', 'lastTotal', 'dppAttempts', 'dppLastScore', 'dppLastTotal', 'lastStudiedAt'])
+        && (!('title' in request.resource.data) || request.resource.data.title.size() <= 200);
+    }
+    match /users/{uid}/hubNotes/{topicId} {
+      allow read, delete: if isOwner(uid);
+      allow create, update: if isOwner(uid) && request.resource.data.text is string && request.resource.data.text.size() <= 8000;
+    }
+
+    // The batches a student joined (their own record only).
+    match /users/{uid}/enrollments/{batchId} {
+      allow read, delete: if isOwner(uid);
+      allow create, update: if isOwner(uid)
+        && request.resource.data.keys().hasOnly(['classId', 'enrolledAt'])
+        && request.resource.data.classId is string && request.resource.data.classId.size() <= 100;
+    }
+
+    // Default: deny everything else (including tutorUsage from the browser).
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

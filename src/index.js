@@ -1,6 +1,17 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import '@fontsource-variable/bricolage-grotesque/wght.css';
+import '@fontsource/hind/400.css';
+import '@fontsource/hind/500.css';
+import '@fontsource/hind/600.css';
 import './index.css';
+import './styles/theme.css';
+import './styles/learn.css';
+import './styles/themes.css';
+import './styles/galaxy.css';
+import './styles/learn.css';
+import './styles/themes.css';
+import './styles/galaxy.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 
