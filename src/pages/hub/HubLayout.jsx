@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, Outlet } from 'react-router-dom';
 import { useContent } from '../../cms/hooks';
-import { useHubProgress } from '../../cms/userData';
+import { useHubProgress, useEnrollments } from '../../cms/userData';
 import { useLearn } from '../../components/learn/LearnContext';
 import { HubContext } from './HubContext';
 import { DemoNote, EmptyState } from '../../components/learn/shared';
@@ -11,6 +11,7 @@ export default function HubLayout() {
   const { user } = useLearn();
   const content = useContent({ admin: false });
   const prog = useHubProgress(user ? user.uid : null);
+  const enr = useEnrollments(user ? user.uid : null);
 
   if (content.status === 'unconfigured') {
     return (
@@ -29,7 +30,7 @@ export default function HubLayout() {
     );
   }
   return (
-    <HubContext.Provider value={{ data: content.data, user, progress: prog.progress, progressActions: prog.actions, progressError: prog.error }}>
+    <HubContext.Provider value={{ data: content.data, user, progress: prog.progress, progressActions: prog.actions, progressError: prog.error, enrolled: enr.enrolled, enroll: enr.enroll, leave: enr.leave }}>
       {prog.error && <DemoNote>{prog.error}</DemoNote>}
       <Outlet />
     </HubContext.Provider>

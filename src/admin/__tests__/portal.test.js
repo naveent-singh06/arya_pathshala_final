@@ -32,7 +32,9 @@ const Manager = require('../Manager').default;
 const AdminLayout = require('../AdminLayout').default;
 const { HubContext } = require('../../pages/hub/HubContext');
 const HubTopic = require('../../pages/hub/HubTopic').default;
-const HubClass = require('../../pages/hub/HubClass').default;
+const HubSubject = require('../../pages/hub/HubSubject').default;
+const HubBatch = require('../../pages/hub/HubBatch').default;
+const HubCourse = require('../../pages/hub/HubCourse').default;
 
 const data = {
   subjects: [{ id: 's1', classId: 'class-10', name: 'Mathematics', status: 'published', order: 1 }],
@@ -41,6 +43,8 @@ const data = {
   lectures: [{ id: 'l1', classId: 'class-10', subjectId: 's1', chapterId: 'c1', topicId: 't1', title: 'Lecture One', teacherName: 'Ms A', youtubeVideoId: 'dQw4w9WgXcQ', status: 'published', order: 1 }],
   resources: [{ id: 'r1', topicId: 't1', title: 'Notes PDF', type: 'Chapter Notes', driveUrl: 'https://drive.google.com/file/d/1AbCdEfGhIjK/view', status: 'published', order: 1 }],
   questions: [{ id: 'q1', topicId: 't1', question: 'What is 2+2?', options: ['3', '4', '5', '6'], correctIndex: 1, explanation: 'Basic sum.', status: 'published' }],
+  courses: [], teachers: [{ id: 'te1', name: 'Ms A', subjects: 'Maths', status: 'published' }], dpps: [{ id: 'd1', classId: 'class-10', chapterId: 'c1', topicId: 't1', title: 'DPP 1', driveUrl: 'https://drive.google.com/file/d/1AbCdEfGhIjK/view', status: 'published' }],
+  batches: [{ id: 'b1', classId: 'class-10', name: 'Board Batch', session: '2026-27', subjectIds: ['s1'], teacherIds: ['te1'], status: 'published', order: 1 }],
   socialLinks: [],
 };
 
@@ -88,7 +92,7 @@ describe('lecture manager', () => {
     renderManager('lectures');
     fireEvent.click(screen.getByRole('button', { name: /add lecture/i }));
     const form = screen.getByRole('region', { name: /add lecture/i });
-    fireEvent.change(within(form).getByLabelText(/class \/ exam/i), { target: { value: 'class-10' } });
+    fireEvent.change(within(form).getByLabelText(/course \/ class/i), { target: { value: 'class-10' } });
     fireEvent.change(within(form).getByLabelText(/^subject/i), { target: { value: 's1' } });
     fireEvent.change(within(form).getByLabelText(/^chapter/i), { target: { value: 'c1' } });
     fireEvent.change(within(form).getByLabelText(/^topic/i), { target: { value: 't1' } });
@@ -106,7 +110,7 @@ describe('lecture manager', () => {
     renderManager('subjects');
     fireEvent.click(screen.getByRole('button', { name: /add subject/i }));
     const form = screen.getByRole('region', { name: /add subject/i });
-    fireEvent.change(within(form).getByLabelText(/class \/ exam/i), { target: { value: 'neet' } });
+    fireEvent.change(within(form).getByLabelText(/course \/ class/i), { target: { value: 'neet' } });
     fireEvent.change(within(form).getByLabelText(/subject name/i), { target: { value: 'Biology' } });
     fireEvent.click(within(form).getByRole('button', { name: 'Save draft' }));
     await waitFor(() => expect(store.createItem).toHaveBeenCalled());
@@ -140,17 +144,42 @@ describe('lecture manager', () => {
 });
 
 describe('student Study Hub', () => {
-  const ctx = (extra) => ({ data, user: { uid: 'u1' }, progress: {}, progressActions: null, ...extra });
-  test('chapter list shows topics with resource indicators', () => {
-    render(
-      <HubContext.Provider value={ctx()}>
-        <MemoryRouter initialEntries={['/hub/class-10']}><Routes><Route path="/hub/:classId" element={<HubClass />} /></Routes></MemoryRouter>
-      </HubContext.Provider>,
-    );
+  const ctx = (extra) => ({ data, user: { uid: 'u1' }, progress: {}, progressActions: null, enrolled: [], ...extra });
+  const at = (path, el, url) => (
+    <HubContext.Provider value={ctx({ enrolled: [], enroll: null, leave: null })}>
+      <MemoryRouter initialEntries={[url]}><Routes><Route path={path} element={el} /></Routes></MemoryRouter>
+    </HubContext.Provider>
+  );
+  test('course page lists its batches', () => {
+    render(at('/hub/:classId', <HubCourse />, '/hub/class-10'));
+    expect(screen.getByText('Board Batch')).toBeTruthy();
+    expect(screen.getByRole('link', { name: /view batch/i }).getAttribute('href')).toBe('/hub/class-10/b1');
+  });
+  test('batch dashboard shows subjects, teachers and progress', () => {
+    render(at('/hub/:classId/:batchId', <HubBatch />, '/hub/class-10/b1'));
+    expect(screen.getAllByText('Mathematics').length).toBeGreaterThan(0);
+    expect(screen.getByText('Ms A')).toBeTruthy();
+    expect(screen.getAllByText(/0\/1/).length).toBeGreaterThan(0);
+  });
+  test('a batch from another course is not found', () => {
+    render(at('/hub/:classId/:batchId', <HubBatch />, '/hub/neet/b1'));
+    expect(screen.queryByText('Board Batch')).toBeNull();
+  });
+  test('subject tracker expands, collapses and shows topic resource icons', () => {
+    render(at('/hub/:classId/:batchId/:subjectId', <HubSubject />, '/hub/class-10/b1/s1'));
     expect(screen.getByText(/Chapter 1: Real Numbers/)).toBeTruthy();
     expect(screen.getByText('Euclid Lemma')).toBeTruthy();
     expect(screen.getByText('0/1 topics completed')).toBeTruthy();
-    expect(screen.getByLabelText('Lectures: 1')).toBeTruthy();
+    expect(screen.getByLabelText('Video lectures: 1')).toBeTruthy();
+    expect(screen.getByLabelText('DPP: 1')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Collapse all' }));
+    expect(screen.queryByText('Euclid Lemma')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Expand all' }));
+    expect(screen.getByText('Euclid Lemma')).toBeTruthy();
+  });
+  test('a subject not assigned to the batch is not found', () => {
+    render(at('/hub/:classId/:batchId/:subjectId', <HubSubject />, '/hub/class-10/b1/other'));
+    expect(screen.queryByText(/Chapter 1/)).toBeNull();
   });
   test('topic page embeds the lecture and opens notes safely', () => {
     render(
@@ -164,9 +193,15 @@ describe('student Study Hub', () => {
     const open = screen.getByRole('link', { name: /open in google drive/i });
     expect(open.getAttribute('target')).toBe('_blank');
     expect(open.getAttribute('rel')).toContain('noopener');
+    fireEvent.click(screen.getByRole('tab', { name: /^dpp/i }));
+    expect(screen.getByText('DPP 1')).toBeTruthy();
     fireEvent.click(screen.getByRole('tab', { name: /practice/i }));
     fireEvent.click(screen.getByLabelText(/B\. 4/));
+    expect(screen.queryByText(/Basic sum/)).toBeNull(); // the explanation only shows after Check
+    fireEvent.click(screen.getByRole('button', { name: /check answer/i }));
     expect(screen.getByText(/Basic sum/)).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /finish and see result/i }));
+    expect(screen.getByText(/You scored 1 out of 1/)).toBeTruthy();
   });
   test('a topic that is not published is not found', () => {
     render(

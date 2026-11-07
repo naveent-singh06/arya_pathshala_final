@@ -36,3 +36,6 @@
   .adm-row { grid-template-columns: minmax(0, 1fr) auto; }
   .adm-row__actions { grid-column: 1 / -1; justify-content: flex-start; }
 }
+
+.adm-multi { border: 1px solid var(--ap-line); border-radius: 10px; padding: 10px 12px; display: grid; gap: 6px; margin: 0; min-width: 0; }
+.adm-multi legend { font-weight: 600; padding: 0 4px; }

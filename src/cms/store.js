@@ -65,3 +65,11 @@ export async function applyOrder(name, pairs) {
   pairs.forEach((p) => batch.update(doc(db, name, p.id), { order: p.order, updatedAt: serverTimestamp() }));
   await batch.commit();
 }
+
+/** Creates several documents at once (bulk topics). Firestore allows 500 writes per batch; callers send far fewer. */
+export async function createMany(name, items, user) {
+  if (!db) throw Object.assign(new Error('not-configured'), { code: 'not-configured' });
+  const batch = writeBatch(db);
+  items.forEach((data) => batch.set(doc(collection(db, name)), { ...data, createdBy: user.uid, createdAt: serverTimestamp(), updatedAt: serverTimestamp() }));
+  await batch.commit();
+}

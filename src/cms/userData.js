@@ -30,7 +30,7 @@ export function useHubProgress(uid) {
       setCompleted: (topicId, completed) => write(topicId, { completed }),
       setBookmarked: (topicId, bookmarked) => write(topicId, { bookmarked }),
       visit: (topicId, topicTitle) => write(topicId, { lastVisited: true, title: String(topicTitle || '').slice(0, 200) }),
-      recordAttempt: (topicId, score, total) => write(topicId, { attempts: increment(1), lastScore: score, lastTotal: total }),
+      recordAttempt: (topicId, score, total, set = 'practice') => write(topicId, set === 'dpp' ? { dppAttempts: increment(1), dppLastScore: score, dppLastTotal: total } : { attempts: increment(1), lastScore: score, lastTotal: total }),
     };
   }, [uid]);
   return { progress: map, error, actions: db && uid ? actions : null };
@@ -43,3 +43,16 @@ export async function loadNote(uid, topicId) {
 }
 export const saveNote = (uid, topicId, text) => setDoc(doc(db, 'users', uid, 'hubNotes', topicId), { text, updatedAt: serverTimestamp() });
 export const deleteNote = (uid, topicId) => deleteDoc(doc(db, 'users', uid, 'hubNotes', topicId));
+
+/** The batches this student has joined: users/{uid}/enrollments/{batchId}. */
+export function useEnrollments(uid) {
+  const [ids, setIds] = useState([]);
+  useEffect(() => {
+    setIds([]);
+    if (!db || !uid) return undefined;
+    return onSnapshot(collection(db, 'users', uid, 'enrollments'), (snap) => setIds(snap.docs.map((d) => d.id)), () => {});
+  }, [uid]);
+  const enroll = (batchId, classId) => setDoc(doc(db, 'users', uid, 'enrollments', batchId), { classId, enrolledAt: serverTimestamp() });
+  const leave = (batchId) => deleteDoc(doc(db, 'users', uid, 'enrollments', batchId));
+  return { enrolled: ids, enroll: db && uid ? enroll : null, leave: db && uid ? leave : null };
+}

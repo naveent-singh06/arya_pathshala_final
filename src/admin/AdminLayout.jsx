@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Layers, BookOpen, ListTree, ListOrdered, PlayCircle, FileText, HelpCircle, Share2, Menu, X, Home, ShieldAlert, ExternalLink } from 'lucide-react';
+import { LayoutDashboard, Layers, GraduationCap, Users, ClipboardList, BookOpen, ListTree, ListOrdered, PlayCircle, FileText, HelpCircle, Share2, Menu, X, Home, ShieldAlert, ExternalLink } from 'lucide-react';
 import { useAdminStatus, useContent } from '../cms/hooks';
 import { firebaseConfigError } from '../components/Login/firebase';
 import { BrandMark } from '../components/Header/Header';
@@ -10,11 +10,15 @@ import '../styles/admin.css';
 
 const ITEMS = [
   { to: '/admin/content', label: 'Overview', icon: LayoutDashboard, end: true },
+  { to: '/admin/content/courses', label: 'Courses', icon: GraduationCap },
+  { to: '/admin/content/batches', label: 'Batches', icon: Layers },
+  { to: '/admin/content/teachers', label: 'Teachers', icon: Users },
   { to: '/admin/content/subjects', label: 'Manage Subjects', icon: BookOpen },
   { to: '/admin/content/chapters', label: 'Manage Chapters', icon: ListTree },
   { to: '/admin/content/topics', label: 'Manage Topics', icon: ListOrdered },
   { to: '/admin/content/lectures', label: 'Manage Lectures', icon: PlayCircle },
   { to: '/admin/content/resources', label: 'Notes & PDFs', icon: FileText },
+  { to: '/admin/content/dpps', label: 'DPP', icon: ClipboardList },
   { to: '/admin/content/questions', label: 'Practice Questions', icon: HelpCircle },
   { to: '/admin/content/socialLinks', label: 'Social Links & Contact', icon: Share2 },
 ];

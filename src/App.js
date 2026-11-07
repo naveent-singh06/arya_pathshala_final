@@ -24,7 +24,9 @@ import LecturePlayer from "./pages/LecturePlayer";
 import NotFound from "./pages/NotFound";
 import HubLayout from "./pages/hub/HubLayout";
 import HubHome from "./pages/hub/HubHome";
-import HubClass from "./pages/hub/HubClass";
+import HubCourse from "./pages/hub/HubCourse";
+import HubBatch from "./pages/hub/HubBatch";
+import HubSubject from "./pages/hub/HubSubject";
 import HubTopic from "./pages/hub/HubTopic";
 import AdminLayout from "./admin/AdminLayout";
 import AdminOverview from "./admin/Overview";
@@ -134,7 +136,9 @@ function AppContent() {
           <Route element={<HubLayout />}>
             <Route path="/hub" element={<HubHome />} />
             <Route path="/hub/topic/:topicId" element={<HubTopic />} />
-            <Route path="/hub/:classId" element={<HubClass />} />
+            <Route path="/hub/:classId" element={<HubCourse />} />
+            <Route path="/hub/:classId/:batchId" element={<HubBatch />} />
+            <Route path="/hub/:classId/:batchId/:subjectId" element={<HubSubject />} />
           </Route>
           <Route path="/dashboard" element={needsLogin(<Dashboard />, "The dashboard")} />
           <Route path="/my-courses" element={needsLogin(<MyCourses />, "My courses")} />

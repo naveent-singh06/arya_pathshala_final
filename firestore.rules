@@ -92,11 +92,22 @@ service cloud.firestore {
       return d.order is number && d.order >= 0 && d.order < 100000;
     }
     function okClass(d) {
-      return d.classId in ['class-9', 'class-10', 'neet'];
+      // class-9, class-10, neet, or the id of a course an admin created.
+      return d.classId is string && d.classId.size() > 0 && d.classId.size() <= 100;
+    }
+    function okLevel(d) {
+      // Older content used Basic/Intermediate/Advanced.
+      return d.difficulty in ['Easy', 'Medium', 'Hard', 'Basic', 'Intermediate', 'Advanced'];
+    }
+    function optUrl(d, key) {
+      return !(key in d) || d[key] == '' || (d[key] is string && d[key].matches('^https://.*') && d[key].size() <= 600);
+    }
+    function optIds(d, key) {
+      return !(key in d) || (d[key] is list && d[key].size() <= 100);
     }
 
     function validSubject(d) {
-      return okStatus(d) && okOrder(d) && okClass(d) && okText(d, 'name', 120) && optText(d, 'description', 2000);
+      return okStatus(d) && okOrder(d) && okClass(d) && okText(d, 'name', 120) && optText(d, 'description', 2000) && optUrl(d, 'imageUrl');
     }
     function validChapter(d) {
       return okStatus(d) && okOrder(d) && okClass(d) && okText(d, 'title', 200) && okText(d, 'subjectId', 100)
@@ -104,7 +115,7 @@ service cloud.firestore {
     }
     function validTopic(d) {
       return okStatus(d) && okOrder(d) && okClass(d) && okText(d, 'title', 200) && okText(d, 'chapterId', 100)
-        && okText(d, 'subjectId', 100) && d.difficulty in ['Basic', 'Intermediate', 'Advanced'] && optText(d, 'description', 2000);
+        && okText(d, 'subjectId', 100) && okLevel(d) && optText(d, 'description', 2000);
     }
     function validLecture(d) {
       return okStatus(d) && okOrder(d) && okClass(d) && okText(d, 'title', 200) && okText(d, 'topicId', 100)
@@ -119,7 +130,47 @@ service cloud.firestore {
     function validQuestion(d) {
       return okStatus(d) && okClass(d) && okText(d, 'question', 2000) && okText(d, 'topicId', 100)
         && d.options is list && d.options.size() == 4 && d.correctIndex is int && d.correctIndex >= 0 && d.correctIndex < 4
-        && d.difficulty in ['Basic', 'Intermediate', 'Advanced'] && optText(d, 'explanation', 4000);
+        && okLevel(d) && optText(d, 'explanation', 4000);
+    }
+
+    function validCourse(d) {
+      return okStatus(d) && okOrder(d) && okText(d, 'title', 120) && optText(d, 'description', 2000);
+    }
+    function validBatch(d) {
+      return okStatus(d) && okOrder(d) && okClass(d) && okText(d, 'name', 120) && optText(d, 'description', 2000)
+        && optText(d, 'session', 40) && optText(d, 'duration', 60) && optUrl(d, 'coverUrl')
+        && optIds(d, 'subjectIds') && optIds(d, 'teacherIds');
+    }
+    function validTeacher(d) {
+      return okStatus(d) && okOrder(d) && okText(d, 'name', 120) && optText(d, 'subjects', 200) && optText(d, 'bio', 2000) && optUrl(d, 'photoUrl');
+    }
+    function validDpp(d) {
+      return okStatus(d) && okOrder(d) && okClass(d) && okText(d, 'title', 200) && okText(d, 'chapterId', 100)
+        && optText(d, 'topicId', 100) && optText(d, 'instructions', 4000) && optText(d, 'dueDate', 10)
+        && optUrl(d, 'externalUrl')
+        && (!('driveUrl' in d) || d.driveUrl == '' || (d.driveUrl is string && d.driveUrl.matches('^https://(drive|docs)\\.google\\.com/.*') && d.driveUrl.size() <= 600))
+        && ((d.get('driveUrl', '') != '') || (d.get('externalUrl', '') != ''));
+    }
+
+    match /courses/{id} {
+      allow read: if isAdmin() || (signedIn() && resource.data.status == 'published');
+      allow create, update: if isAdmin() && validCourse(request.resource.data);
+      allow delete: if isAdmin();
+    }
+    match /batches/{id} {
+      allow read: if isAdmin() || (signedIn() && resource.data.status == 'published');
+      allow create, update: if isAdmin() && validBatch(request.resource.data);
+      allow delete: if isAdmin();
+    }
+    match /teachers/{id} {
+      allow read: if isAdmin() || (signedIn() && resource.data.status == 'published');
+      allow create, update: if isAdmin() && validTeacher(request.resource.data);
+      allow delete: if isAdmin();
+    }
+    match /dpps/{id} {
+      allow read: if isAdmin() || (signedIn() && resource.data.status == 'published');
+      allow create, update: if isAdmin() && validDpp(request.resource.data);
+      allow delete: if isAdmin();
     }
 
     match /subjects/{id} {
@@ -169,12 +220,20 @@ service cloud.firestore {
     match /users/{uid}/hubProgress/{topicId} {
       allow read, delete: if isOwner(uid);
       allow create, update: if isOwner(uid)
-        && request.resource.data.keys().hasOnly(['completed', 'bookmarked', 'lastVisited', 'title', 'attempts', 'lastScore', 'lastTotal', 'lastStudiedAt'])
+        && request.resource.data.keys().hasOnly(['completed', 'bookmarked', 'lastVisited', 'title', 'attempts', 'lastScore', 'lastTotal', 'dppAttempts', 'dppLastScore', 'dppLastTotal', 'lastStudiedAt'])
         && (!('title' in request.resource.data) || request.resource.data.title.size() <= 200);
     }
     match /users/{uid}/hubNotes/{topicId} {
       allow read, delete: if isOwner(uid);
       allow create, update: if isOwner(uid) && request.resource.data.text is string && request.resource.data.text.size() <= 8000;
+    }
+
+    // The batches a student joined (their own record only).
+    match /users/{uid}/enrollments/{batchId} {
+      allow read, delete: if isOwner(uid);
+      allow create, update: if isOwner(uid)
+        && request.resource.data.keys().hasOnly(['classId', 'enrolledAt'])
+        && request.resource.data.classId is string && request.resource.data.classId.size() <= 100;
     }
 
     // Default: deny everything else (including tutorUsage from the browser).

@@ -3,6 +3,17 @@ import { parseDrive } from '../cms/drive';
 import { normalizeLink, PLATFORMS } from '../cms/links';
 import { DIFFICULTIES, RESOURCE_TYPES } from '../cms/model';
 
+const httpsOrEmpty = (v) => {
+  const t = String(v == null ? '' : v).trim();
+  if (!t) return { ok: true, value: '' };
+  try {
+    const u = new URL(t);
+    return u.protocol === 'https:' && u.hostname.includes('.') ? { ok: true, value: u.toString() } : { ok: false };
+  } catch (e) {
+    return { ok: false };
+  }
+};
+
 const text = (v) => String(v == null ? '' : v).trim();
 const num = (v) => (v === '' || v == null || Number.isNaN(Number(v)) ? null : Number(v));
 
@@ -30,12 +41,15 @@ export const MANAGERS = {
     fields: [
       { key: 'name', label: 'Subject name', type: 'text', required: true },
       { key: 'description', label: 'Description', type: 'textarea' },
+      { key: 'imageUrl', label: 'Image link (optional)', type: 'text', help: 'A https:// picture link. Leave empty to use an icon.' },
       { key: 'order', label: 'Display order', type: 'number', help: 'Lower numbers show first.' },
     ],
     build(form) {
       const errors = {};
       base(form, errors, { levels: 1, titleKey: 'name', titleLabel: 'Subject name', max: 120 });
-      return { errors, data: { ...scopeIds(form, 1), name: text(form.name), description: text(form.description), order: num(form.order) || 0 } };
+      const img = httpsOrEmpty(form.imageUrl);
+      if (!img.ok) errors.imageUrl = 'Use a full https:// link.';
+      return { errors, data: { ...scopeIds(form, 1), name: text(form.name), description: text(form.description), imageUrl: img.ok ? img.value : '', order: num(form.order) || 0 } };
     },
   },
   chapters: {
@@ -63,7 +77,7 @@ export const MANAGERS = {
     build(form) {
       const errors = {};
       base(form, errors, { levels: 3, titleKey: 'title', titleLabel: 'Topic title' });
-      return { errors, data: { ...scopeIds(form, 3), title: text(form.title), description: text(form.description), difficulty: DIFFICULTIES.includes(form.difficulty) ? form.difficulty : 'Basic', order: num(form.order) || 0 } };
+      return { errors, data: { ...scopeIds(form, 3), title: text(form.title), description: text(form.description), difficulty: DIFFICULTIES.includes(form.difficulty) ? form.difficulty : 'Easy', order: num(form.order) || 0 } };
     },
   },
   lectures: {
@@ -125,6 +139,8 @@ export const MANAGERS = {
       { key: 'correctIndex', label: 'Correct answer', type: 'select', options: ['A', 'B', 'C', 'D'], valueByIndex: true },
       { key: 'explanation', label: 'Explanation', type: 'textarea' },
       { key: 'difficulty', label: 'Difficulty', type: 'select', options: DIFFICULTIES },
+      { key: 'set', label: 'Where it appears', type: 'select', options: [{ value: 'practice', label: 'Practice questions' }, { value: 'dpp', label: 'DPP (daily practice problems)' }] },
+      { key: 'order', label: 'Display order', type: 'number' },
     ],
     build(form) {
       const errors = {};
@@ -141,13 +157,103 @@ export const MANAGERS = {
         errors,
         data: {
           ...scopeIds(form, 4), question: text(form.question), options, correctIndex: ci >= 0 && ci <= 3 ? ci : 0,
-          explanation: text(form.explanation), difficulty: DIFFICULTIES.includes(form.difficulty) ? form.difficulty : 'Basic', type: 'mcq',
+          explanation: text(form.explanation), difficulty: DIFFICULTIES.includes(form.difficulty) ? form.difficulty : 'Easy', type: 'mcq', set: form.set === 'dpp' ? 'dpp' : 'practice', order: num(form.order) || 0,
         },
       };
     },
     // Edit form <- stored doc
     toForm(item) {
-      return { ...item, o0: item.options[0], o1: item.options[1], o2: item.options[2], o3: item.options[3], correctIndex: String(item.correctIndex) };
+      return { ...item, o0: item.options[0], o1: item.options[1], o2: item.options[2], o3: item.options[3], correctIndex: String(item.correctIndex), set: item.set || 'practice', order: String(item.order || 0) };
+    },
+  },
+
+  courses: {
+    title: 'Courses', singular: 'course', levels: 0, titleKey: 'title',
+    help: 'Class 9, Class 10 and NEET always exist. Add another course here and it appears next to them.',
+    fields: [
+      { key: 'title', label: 'Course name', type: 'text', required: true },
+      { key: 'description', label: 'Description', type: 'textarea' },
+      { key: 'order', label: 'Display order', type: 'number' },
+    ],
+    build(form) {
+      const errors = {};
+      if (!text(form.title)) errors.title = 'Course name is required.';
+      else if (text(form.title).length > 120) errors.title = 'Keep the name under 120 characters.';
+      return { errors, data: { title: text(form.title), description: text(form.description), order: num(form.order) || 0 } };
+    },
+  },
+  batches: {
+    title: 'Batches', singular: 'batch', levels: 1, parent: 'classId', titleKey: 'name',
+    fields: [
+      { key: 'name', label: 'Batch name', type: 'text', required: true, help: 'For example "Class 9 Foundation Batch".' },
+      { key: 'description', label: 'Description', type: 'textarea' },
+      { key: 'session', label: 'Academic session', type: 'text', help: 'For example 2026-27' },
+      { key: 'duration', label: 'Course duration', type: 'text', help: 'For example "10 months"' },
+      { key: 'coverUrl', label: 'Cover image link (optional)', type: 'text', help: 'A https:// picture link.' },
+      { key: 'subjectIds', label: 'Subjects in this batch', type: 'multi', from: 'subjects', help: 'Tick the subjects students of this batch study. Subjects are listed for the selected class.' },
+      { key: 'teacherIds', label: 'Teachers', type: 'multi', from: 'teachers', help: 'Add teachers in the Teachers section first.' },
+      { key: 'order', label: 'Display order', type: 'number' },
+    ],
+    build(form) {
+      const errors = {};
+      base(form, errors, { levels: 1, titleKey: 'name', titleLabel: 'Batch name', max: 120 });
+      const cover = httpsOrEmpty(form.coverUrl);
+      if (!cover.ok) errors.coverUrl = 'Use a full https:// link.';
+      const ids = (v) => (Array.isArray(v) ? v.filter(Boolean) : []);
+      return {
+        errors,
+        data: {
+          ...scopeIds(form, 1), name: text(form.name), description: text(form.description), session: text(form.session), duration: text(form.duration),
+          coverUrl: cover.ok ? cover.value : '', subjectIds: ids(form.subjectIds), teacherIds: ids(form.teacherIds), order: num(form.order) || 0,
+        },
+      };
+    },
+  },
+  teachers: {
+    title: 'Teachers', singular: 'teacher', levels: 0, titleKey: 'name',
+    fields: [
+      { key: 'name', label: 'Teacher name', type: 'text', required: true },
+      { key: 'subjects', label: 'Subjects they teach', type: 'text', help: 'For example "Mathematics, Science"' },
+      { key: 'bio', label: 'Short introduction', type: 'textarea' },
+      { key: 'photoUrl', label: 'Photo link (optional)', type: 'text', help: 'A https:// picture link.' },
+      { key: 'order', label: 'Display order', type: 'number' },
+    ],
+    build(form) {
+      const errors = {};
+      if (!text(form.name)) errors.name = 'Teacher name is required.';
+      else if (text(form.name).length > 120) errors.name = 'Keep the name under 120 characters.';
+      const photo = httpsOrEmpty(form.photoUrl);
+      if (!photo.ok) errors.photoUrl = 'Use a full https:// link.';
+      return { errors, data: { name: text(form.name), subjects: text(form.subjects), bio: text(form.bio), photoUrl: photo.ok ? photo.value : '', order: num(form.order) || 0 } };
+    },
+  },
+  dpps: {
+    title: 'DPP', singular: 'DPP', levels: 4, optionalLevel: 4, parent: 'chapterId', titleKey: 'title', drive: true,
+    help: 'Pick a chapter. Pick a topic as well if this DPP belongs to one topic. Question-based DPPs: add questions under Practice Questions and set "Where it appears" to DPP.',
+    fields: [
+      { key: 'title', label: 'DPP title', type: 'text', required: true },
+      { key: 'driveUrl', label: 'Google Drive PDF link', type: 'text', help: 'Use this or the external link below.' },
+      { key: 'externalUrl', label: 'Or external practice link', type: 'text', help: 'A full https:// link.' },
+      { key: 'instructions', label: 'Instructions', type: 'textarea' },
+      { key: 'dueDate', label: 'Due date (optional)', type: 'date' },
+      { key: 'order', label: 'Display order', type: 'number' },
+    ],
+    build(form) {
+      const errors = {};
+      base(form, errors, { levels: 3, titleKey: 'title', titleLabel: 'DPP title' });
+      const drive = text(form.driveUrl) ? parseDrive(form.driveUrl) : null;
+      const ext = httpsOrEmpty(form.externalUrl);
+      if (drive && !drive.ok) errors.driveUrl = drive.error;
+      if (!ext.ok) errors.externalUrl = 'Use a full https:// link.';
+      if (!drive && !text(form.externalUrl) && !errors.driveUrl) errors.driveUrl = 'Add a Google Drive link or an external practice link.';
+      if (form.dueDate && !/^\d{4}-\d{2}-\d{2}$/.test(form.dueDate)) errors.dueDate = 'Pick a valid date.';
+      return {
+        errors,
+        data: {
+          ...scopeIds(form, 3), topicId: form.topicId || '', title: text(form.title), driveUrl: drive && drive.ok ? drive.viewUrl : '', driveId: drive && drive.ok ? drive.id : '',
+          externalUrl: ext.ok ? ext.value : '', instructions: text(form.instructions), dueDate: text(form.dueDate), order: num(form.order) || 0,
+        },
+      };
     },
   },
   socialLinks: {

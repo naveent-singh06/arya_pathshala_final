@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { AlertTriangle, CheckCircle2, Info } from 'lucide-react';
-import { CLASSES, byOrder, statusLabel } from '../cms/model';
+import { allClasses, byOrder, statusLabel } from '../cms/model';
 
 export function Field({ id, label, help, error, required, children }) {
   return (
@@ -53,42 +53,61 @@ export function ConfirmDialog({ title, children, confirmLabel = 'Delete', busy, 
   );
 }
 
+const PLURAL = { classId: 'courses', batchId: 'batches', subjectId: 'subjects', chapterId: 'chapters', topicId: 'topics' };
 const LEVELS = [
-  { key: 'classId', label: 'Class / exam' },
+  { key: 'classId', label: 'Course / class' },
+  { key: 'batchId', label: 'Batch (optional)', optional: true, filterOnly: true },
   { key: 'subjectId', label: 'Subject' },
   { key: 'chapterId', label: 'Chapter' },
   { key: 'topicId', label: 'Topic' },
 ];
 
-/** Cascading class -> subject -> chapter -> topic selects. `levels` is how many to show. */
-export function HierarchyPicker({ value, onChange, levels, data, allowAll, errors = {}, idPrefix = 'h', required }) {
-  const options = (level) => {
-    if (level === 0) return CLASSES.map((c) => ({ id: c.id, label: c.title }));
-    if (level === 1) return (data.subjects || []).filter((s) => s.classId === value.classId).sort(byOrder).map((s) => ({ id: s.id, label: s.name }));
-    if (level === 2) return (data.chapters || []).filter((c) => c.subjectId === value.subjectId).sort(byOrder).map((c) => ({ id: c.id, label: `${c.number ? `Ch ${c.number}: ` : ''}${c.title}` }));
+/**
+ * Cascading course -> batch -> subject -> chapter -> topic selects. `levels` is how many of
+ * course/subject/chapter/topic to show (the batch select appears with subjects and only narrows
+ * the subject list; it is not saved). `optionalLevel` marks the deepest level as optional.
+ */
+export function HierarchyPicker({ value, onChange, levels, data, allowAll, errors = {}, idPrefix = 'h', required, optionalLevel }) {
+  const active = LEVELS.filter((l) => (l.key === 'batchId' ? levels >= 2 : true)).filter((l) => {
+    const depth = { classId: 1, subjectId: 2, chapterId: 3, topicId: 4 }[l.key];
+    return !depth || depth <= levels;
+  });
+  const options = (key) => {
+    if (key === 'classId') return allClasses(data).map((c) => ({ id: c.id, label: c.title }));
+    if (key === 'batchId') return (data.batches || []).filter((b) => b.classId === value.classId).sort(byOrder).map((b) => ({ id: b.id, label: b.name }));
+    if (key === 'subjectId') {
+      const batch = value.batchId && (data.batches || []).find((b) => b.id === value.batchId);
+      return (data.subjects || [])
+        .filter((s) => s.classId === value.classId && (!batch || (batch.subjectIds || []).includes(s.id)))
+        .sort(byOrder).map((s) => ({ id: s.id, label: s.name }));
+    }
+    if (key === 'chapterId') return (data.chapters || []).filter((c) => c.subjectId === value.subjectId).sort(byOrder).map((c) => ({ id: c.id, label: `${c.number ? `Ch ${c.number}: ` : ''}${c.title}` }));
     return (data.topics || []).filter((t) => t.chapterId === value.chapterId).sort(byOrder).map((t) => ({ id: t.id, label: t.title }));
   };
-  const set = (level, id) => {
+  const set = (key, id) => {
     const next = { ...value };
-    LEVELS.forEach((l, i) => {
-      if (i === level) next[l.key] = id;
-      else if (i > level) next[l.key] = '';
+    const order = LEVELS.map((l) => l.key);
+    order.forEach((k, i) => {
+      if (k === key) next[k] = id;
+      else if (i > order.indexOf(key)) next[k] = '';
     });
     onChange(next);
   };
   return (
     <>
-      {LEVELS.slice(0, levels).map((l, i) => {
-        const parentMissing = i > 0 && !value[LEVELS[i - 1].key];
-        const opts = parentMissing ? [] : options(i);
+      {active.map((l, i) => {
+        const prev = active.slice(0, i).reverse().find((x) => !x.filterOnly);
+        const parentMissing = !!prev && !value[prev.key];
+        const opts = parentMissing ? [] : options(l.key);
         const fid = `${idPrefix}-${l.key}`;
+        const optional = l.optional || (optionalLevel && l.key === 'topicId');
         return (
-          <Field key={l.key} id={fid} label={l.label} required={required && !allowAll} error={errors[l.key]}>
-            <select id={fid} className="ap-input" value={value[l.key] || ''} disabled={parentMissing} onChange={(e) => set(i, e.target.value)} aria-invalid={!!errors[l.key]}>
-              <option value="">{allowAll ? `All ${l.label.toLowerCase()}s` : `Select ${l.label.toLowerCase()}`}</option>
+          <Field key={l.key} id={fid} label={optionalLevel && l.key === 'topicId' ? 'Topic (optional)' : l.label} required={required && !allowAll && !optional} error={errors[l.key]}>
+            <select id={fid} className="ap-input" value={value[l.key] || ''} disabled={parentMissing} onChange={(e) => set(l.key, e.target.value)} aria-invalid={!!errors[l.key]}>
+              <option value="">{allowAll || optional ? `All ${PLURAL[l.key]}` : `Select ${l.label.toLowerCase()}`}</option>
               {opts.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
             </select>
-            {!parentMissing && !opts.length && i > 0 && <small className="ap-muted">None yet. Add one first.</small>}
+            {!parentMissing && !opts.length && l.key !== 'classId' && !optional && <small className="ap-muted">None yet. Add one first.</small>}
           </Field>
         );
       })}

@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { CheckCircle2, ChevronLeft, ChevronRight, ExternalLink, Download, Bookmark } from 'lucide-react';
-import { buildTree, flatTopics } from '../../cms/model';
-import { getCategory } from '../../data/categories';
+import { buildTree, flatTopics, findCourse, difficultyLabel, splitQuestions } from '../../cms/model';
+import QuestionRunner from './QuestionRunner';
 import { youTubeEmbedUrl, youTubeWatchUrl } from '../../cms/youtube';
 import { parseDrive } from '../../cms/drive';
 import { loadNote, saveNote, deleteNote } from '../../cms/userData';
@@ -14,6 +14,7 @@ import '../../styles/hub.css';
 const TABS = [
   { id: 'lecture', label: 'Video lecture' },
   { id: 'notes', label: 'Handwritten notes' },
+  { id: 'dpp', label: 'DPP' },
   { id: 'practice', label: 'Practice' },
   { id: 'mine', label: 'My notes' },
 ];
@@ -69,48 +70,41 @@ function Notes({ resources }) {
   );
 }
 
-function Practice({ topic, questions, onAttempt, attempts, last }) {
-  const [answers, setAnswers] = useState({});
-  const [done, setDone] = useState(false);
-  if (!questions.length) return <EmptyState title="Questions coming soon">Practice questions for this topic have not been published yet.</EmptyState>;
-  const score = questions.filter((q) => answers[q.id] === q.correctIndex).length;
-  const finish = () => {
-    setDone(true);
-    onAttempt(score, questions.length);
-  };
+function Practice({ questions, onAttempt, attempts, last, set }) {
+  if (!questions.length) return <EmptyState title="Questions coming soon">{set === 'dpp' ? 'Question-based DPP' : 'Practice questions'} for this topic have not been published yet.</EmptyState>;
+  return <QuestionRunner key={set} idPrefix={set} questions={questions} attempts={attempts} last={last} onFinish={onAttempt} />;
+}
+
+function Dpp({ topicDpps, chapterDpps, questions, progress, onAttempt }) {
+  const links = [...topicDpps, ...chapterDpps];
   return (
     <div className="ap-stack" style={{ gap: 14 }}>
-      {attempts > 0 && <p className="ap-muted">Attempts: {attempts}{last ? ` · Last score ${last.score}/${last.total}` : ''}</p>}
-      {done && (
-        <div className="ap-card ap-score" role="status">
-          <h2>You scored {score} out of {questions.length}</h2>
-          <button type="button" className="ap-btn ap-btn--primary" style={{ justifySelf: 'start' }} onClick={() => { setAnswers({}); setDone(false); }}>Try again</button>
-        </div>
+      {!links.length && !questions.length && <EmptyState title="DPP coming soon">The daily practice problems for this topic have not been published yet.</EmptyState>}
+      {links.length > 0 && (
+        <ul className="hub-res">
+          {links.map((d) => {
+            const dr = d.driveUrl ? parseDrive(d.driveUrl) : null;
+            return (
+              <li key={d.id} className="ap-card ap-panel">
+                <h3>{d.title}</h3>
+                <p className="ap-muted">{d.topicId ? 'Topic DPP' : 'Chapter DPP'}{d.dueDate ? ` · Due ${d.dueDate}` : ''}</p>
+                {d.instructions && <p>{d.instructions}</p>}
+                <div className="ap-row ap-row--wrap">
+                  <a className="ap-btn ap-btn--primary ap-btn--sm" href={d.driveUrl || d.externalUrl} target="_blank" rel="noopener noreferrer"><ExternalLink size={16} aria-hidden="true" /> {d.driveUrl ? 'Open DPP in Google Drive' : 'Open practice link'}</a>
+                  {dr && dr.ok && dr.downloadUrl && <a className="ap-btn ap-btn--ghost ap-btn--sm" href={dr.downloadUrl} target="_blank" rel="noopener noreferrer"><Download size={16} aria-hidden="true" /> Download</a>}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
       )}
-      {questions.map((q, n) => {
-        const chosen = answers[q.id];
-        const show = done || chosen !== undefined;
-        return (
-          <fieldset key={q.id} className="ap-card ap-question">
-            <legend><span className="ap-question__n">{n + 1}</span> {q.question}</legend>
-            <div className="ap-options">
-              {q.options.map((o, i) => {
-                const cls = show ? (i === q.correctIndex ? 'is-right' : chosen === i ? 'is-wrong' : '') : chosen === i ? 'is-chosen' : '';
-                return (
-                  <label key={i} className={`ap-option ${cls}`}>
-                    <input type="radio" name={q.id} checked={chosen === i} disabled={done} onChange={() => setAnswers((a) => ({ ...a, [q.id]: i }))} />
-                    <span>{String.fromCharCode(65 + i)}. {o}</span>
-                  </label>
-                );
-              })}
-            </div>
-            {show && chosen !== undefined && (
-              <p className="ap-explain" role="status"><strong>{chosen === q.correctIndex ? 'Correct. ' : 'Not quite. '}</strong>{q.explanation || `The correct answer is ${String.fromCharCode(65 + q.correctIndex)}.`}</p>
-            )}
-          </fieldset>
-        );
-      })}
-      {!done && <button type="button" className="ap-btn ap-btn--accent" style={{ justifySelf: 'start' }} disabled={Object.keys(answers).length === 0} onClick={finish}>Finish and save my score</button>}
+      {questions.length > 0 && (
+        <section className="ap-stack" style={{ gap: 10 }} aria-label="DPP questions">
+          <h3>DPP questions</h3>
+          <p className="ap-muted">Attempted: {progress.dppAttempts || 0} time(s){progress.dppLastScore !== undefined ? ` · Last score ${progress.dppLastScore}/${progress.dppLastTotal}` : ''}</p>
+          <Practice set="dpp" questions={questions} onAttempt={onAttempt} attempts={0} last={null} />
+        </section>
+      )}
     </div>
   );
 }
@@ -162,6 +156,7 @@ export default function HubTopic() {
   const idx = flat.findIndex((t) => t.id === topicId);
   const tab = TABS.some((t) => t.id === params.get('tab')) ? params.get('tab') : 'lecture';
   const p = progress[topicId] || {};
+  const batchParam = params.get('batch');
 
   useEffect(() => {
     if (progressActions && topic) progressActions.visit(topic.id, topic.title).catch(() => {});
@@ -170,29 +165,37 @@ export default function HubTopic() {
 
   if (!topic || !full) return <NotFound what="topic" />;
   const chapter = subject.chapters.find((c) => c.id === topic.chapterId);
-  const category = getCategory(topic.classId);
+  const course = findCourse(data, topic.classId);
+  const batch = data.batches.find((b) => b.classId === topic.classId && (b.subjectIds || []).includes(subject.id) && (!batchParam || b.id === batchParam))
+    || data.batches.find((b) => b.classId === topic.classId && (b.subjectIds || []).includes(subject.id));
+  const qs = batch ? `?batch=${batch.id}` : '';
+  const { practice, dpp } = splitQuestions(full.questions);
+  const dppCount = full.dpps.length + dpp.length + chapter.dpps.length;
+  const subjectUrl = batch ? `/hub/${topic.classId}/${batch.id}/${subject.id}?chapter=${topic.chapterId}` : `/hub/${topic.classId}`;
 
   return (
     <div className="ap-stack" style={{ gap: 16 }}>
       <nav className="ap-crumbs" aria-label="Breadcrumb">
-        <Link to="/hub">Study Hub</Link> / <Link to={`/hub/${topic.classId}?subject=${subject.id}`}>{category ? category.title : topic.classId} · {subject.name}</Link> / <span aria-current="page">{topic.title}</span>
+        <Link to="/hub">All courses</Link> / <Link to={`/hub/${topic.classId}`}>{course ? course.title : topic.classId}</Link>
+        {batch && <> / <Link to={`/hub/${topic.classId}/${batch.id}`}>{batch.name}</Link></>} / <Link to={subjectUrl}>{subject.name}</Link> / <span aria-current="page">{topic.title}</span>
       </nav>
       <header className="ap-lecturehead">
         <h1>{topic.title}</h1>
-        <p className="ap-muted">{subject.name}{chapter ? `, ${chapter.number ? `Chapter ${chapter.number}: ` : ''}${chapter.title}` : ''} · {topic.difficulty || 'Basic'}</p>
+        <p className="ap-muted">{subject.name}{chapter ? `, ${chapter.number ? `Chapter ${chapter.number}: ` : ''}${chapter.title}` : ''} · {difficultyLabel(topic.difficulty)}</p>
         {topic.description && <p>{topic.description}</p>}
       </header>
       <div className="ap-navrow">
-        {idx > 0 ? <Link className="ap-btn ap-btn--ghost" to={`/hub/topic/${flat[idx - 1].id}`}><ChevronLeft size={18} aria-hidden="true" /> Previous topic</Link> : <button type="button" className="ap-btn ap-btn--ghost" disabled><ChevronLeft size={18} aria-hidden="true" /> Previous topic</button>}
+        {idx > 0 ? <Link className="ap-btn ap-btn--ghost" to={`/hub/topic/${flat[idx - 1].id}${qs}`}><ChevronLeft size={18} aria-hidden="true" /> Previous topic</Link> : <button type="button" className="ap-btn ap-btn--ghost" disabled><ChevronLeft size={18} aria-hidden="true" /> Previous topic</button>}
         <button type="button" className={`ap-btn ${p.completed ? 'ap-btn--ghost' : 'ap-btn--accent'}`} aria-pressed={!!p.completed} disabled={!progressActions} title={progressActions ? undefined : 'Log in to track progress'} onClick={() => progressActions.setCompleted(topicId, !p.completed)}><CheckCircle2 size={18} aria-hidden="true" /> {p.completed ? 'Completed. Undo' : 'Mark as completed'}</button>
         <button type="button" className="ap-btn ap-btn--ghost" aria-pressed={!!p.bookmarked} disabled={!progressActions} title={progressActions ? undefined : 'Log in to save topics'} onClick={() => progressActions.setBookmarked(topicId, !p.bookmarked)}><Bookmark size={18} aria-hidden="true" /> {p.bookmarked ? 'Saved' : 'Save topic'}</button>
-        {idx < flat.length - 1 ? <Link className="ap-btn ap-btn--primary" to={`/hub/topic/${flat[idx + 1].id}`}>Next topic <ChevronRight size={18} aria-hidden="true" /></Link> : <button type="button" className="ap-btn ap-btn--primary" disabled>Next topic <ChevronRight size={18} aria-hidden="true" /></button>}
+        {idx < flat.length - 1 ? <Link className="ap-btn ap-btn--primary" to={`/hub/topic/${flat[idx + 1].id}${qs}`}>Next topic <ChevronRight size={18} aria-hidden="true" /></Link> : <button type="button" className="ap-btn ap-btn--primary" disabled>Next topic <ChevronRight size={18} aria-hidden="true" /></button>}
       </div>
-      <Tabs tabs={TABS.map((t) => ({ ...t, label: `${t.label}${t.id === 'lecture' ? ` (${full.lectures.length})` : t.id === 'notes' ? ` (${full.resources.length})` : t.id === 'practice' ? ` (${full.questions.length})` : ''}` }))} active={tab} onChange={(id) => setParams({ tab: id }, { replace: true })} label="Topic sections" />
+      <Tabs tabs={TABS.map((t) => ({ ...t, label: `${t.label}${t.id === 'lecture' ? ` (${full.lectures.length})` : t.id === 'notes' ? ` (${full.resources.length})` : t.id === 'practice' ? ` (${practice.length})` : t.id === 'dpp' ? ` (${dppCount})` : ''}` }))} active={tab} onChange={(id) => setParams({ tab: id }, { replace: true })} label="Topic sections" />
       <TabPanel id={tab}>
         {tab === 'lecture' && <Lectures lectures={full.lectures} />}
         {tab === 'notes' && <Notes resources={full.resources} />}
-        {tab === 'practice' && <Practice key={topicId} topic={topic} questions={full.questions} attempts={p.attempts || 0} last={p.lastScore !== undefined ? { score: p.lastScore, total: p.lastTotal } : null} onAttempt={(s, t) => progressActions && progressActions.recordAttempt(topicId, s, t).catch(() => {})} />}
+        {tab === 'dpp' && <Dpp key={topicId} topicDpps={full.dpps} chapterDpps={chapter.dpps} questions={dpp} progress={p} onAttempt={(s, t) => progressActions && progressActions.recordAttempt(topicId, s, t, 'dpp').catch(() => {})} />}
+        {tab === 'practice' && <Practice key={topicId} set="practice" questions={practice} attempts={p.attempts || 0} last={p.lastScore !== undefined ? { score: p.lastScore, total: p.lastTotal } : null} onAttempt={(s, t) => progressActions && progressActions.recordAttempt(topicId, s, t).catch(() => {})} />}
         {tab === 'mine' && <MyNotes user={user} topicId={topicId} />}
       </TabPanel>
     </div>

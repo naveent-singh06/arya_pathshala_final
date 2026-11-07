@@ -138,3 +138,117 @@ describe('admin form validation', () => {
     expect(MANAGERS.socialLinks.build({ platform: 'telegram', url: 'https://t.me/aryapathshala' }).errors).toEqual({});
   });
 });
+
+describe('batches, DPPs and progress', () => {
+  const {
+    visibleData, buildTree, batchSubjects, batchTeachers, subjectProgress, batchProgress, splitQuestions, allClasses, findCourse, difficultyLabel,
+  } = require('../model');
+  const pub = (o) => ({ status: 'published', order: 1, ...o });
+  const data = {
+    courses: [pub({ id: 'crash', title: 'Crash Course' }), { id: 'hid', title: 'Hidden', status: 'draft' }],
+    batches: [pub({ id: 'b1', classId: 'class-9', name: 'Foundation', subjectIds: ['s1', 's2'], teacherIds: ['te1'] }), { id: 'b2', classId: 'class-9', name: 'Draft batch', status: 'draft' }],
+    teachers: [pub({ id: 'te1', name: 'T' }), { id: 'te2', name: 'Hidden', status: 'draft' }],
+    subjects: [pub({ id: 's1', classId: 'class-9', name: 'Maths' }), pub({ id: 's2', classId: 'class-9', name: 'Science' }), { id: 's3', classId: 'class-9', name: 'Draft', status: 'draft' }],
+    chapters: [pub({ id: 'c1', subjectId: 's1', title: 'Ch', classId: 'class-9' }), pub({ id: 'c3', subjectId: 's3', title: 'Orphan', classId: 'class-9' })],
+    topics: [pub({ id: 't1', chapterId: 'c1', subjectId: 's1', title: 'A' }), pub({ id: 't2', chapterId: 'c1', subjectId: 's1', title: 'B', order: 2 }), pub({ id: 't3', chapterId: 'c3', title: 'X' })],
+    lectures: [], resources: [],
+    questions: [pub({ id: 'q1', topicId: 't1', set: 'dpp' }), pub({ id: 'q2', topicId: 't1' }), { id: 'q3', topicId: 't1', status: 'draft' }],
+    dpps: [pub({ id: 'd1', chapterId: 'c1', topicId: 't1', title: 'T DPP' }), pub({ id: 'd2', chapterId: 'c1', title: 'Ch DPP' }), { id: 'd3', chapterId: 'c1', status: 'draft' }, pub({ id: 'd4', chapterId: 'c3' })],
+  };
+  const v = visibleData(data);
+
+  test('students only see published items whose parents are published', () => {
+    expect(v.batches.map((b) => b.id)).toEqual(['b1']);
+    expect(v.teachers.map((t) => t.id)).toEqual(['te1']);
+    expect(v.courses.map((c) => c.id)).toEqual(['crash']);
+    expect(v.topics.map((t) => t.id)).toEqual(['t1', 't2']); // t3 sits under an unpublished subject
+    expect(v.dpps.map((d) => d.id).sort()).toEqual(['d1', 'd2']);
+    expect(v.questions.map((q) => q.id).sort()).toEqual(['q1', 'q2']);
+  });
+  test('a batch only lists the subjects assigned to it, in its own order', () => {
+    expect(batchSubjects(v, v.batches[0]).map((s) => s.id)).toEqual(['s1', 's2']);
+    expect(batchTeachers(v, v.batches[0]).map((t) => t.id)).toEqual(['te1']);
+    expect(batchSubjects(v, null)).toEqual([]);
+  });
+  test('the tree attaches topic DPPs and chapter DPPs', () => {
+    const tree = buildTree(v, 'class-9');
+    const ch = tree.find((s) => s.id === 's1').chapters[0];
+    expect(ch.dpps.map((d) => d.id)).toEqual(['d2']);
+    expect(ch.topics[0].dpps.map((d) => d.id)).toEqual(['d1']);
+  });
+  test('progress is counted from completed topics only (opening a topic is not completing it)', () => {
+    const tree = buildTree(v, 'class-9').filter((s) => s.id === 's1');
+    const progress = { t1: { completed: true }, t2: { lastVisited: true } };
+    expect(subjectProgress(tree[0], progress)).toEqual({ done: 1, total: 2, percent: 50 });
+    expect(batchProgress(tree, progress).percent).toBe(50);
+    expect(batchProgress([], {})).toEqual({ done: 0, total: 0, percent: 0 });
+  });
+  test('questions split between practice and DPP', () => {
+    const s = splitQuestions(v.questions);
+    expect(s.dpp.map((q) => q.id)).toEqual(['q1']);
+    expect(s.practice.map((q) => q.id)).toEqual(['q2']);
+  });
+  test('built-in and admin-created courses', () => {
+    expect(allClasses(data).map((c) => c.id)).toEqual(['class-9', 'class-10', 'neet', 'hid', 'crash']);
+    expect(findCourse(v, 'crash').title).toBe('Crash Course');
+    expect(findCourse(v, 'class-10').title).toBe('Class 10');
+    expect(findCourse(v, 'nope')).toBeNull();
+  });
+  test('old difficulty names display as Easy / Medium / Hard', () => {
+    expect(['Basic', 'Intermediate', 'Advanced', 'Hard', undefined].map(difficultyLabel)).toEqual(['Easy', 'Medium', 'Hard', 'Hard', 'Easy']);
+  });
+});
+
+describe('firestore.rules (static checks; not run against the emulator)', () => {
+  const rules = require('fs').readFileSync(require('path').join(__dirname, '../../../firestore.rules'), 'utf8');
+  test.each(['courses', 'batches', 'teachers', 'subjects', 'chapters', 'topics', 'lectures', 'resources', 'dpps', 'questions'])('%s: only admins write, students read published only', (c) => {
+    const block = rules.slice(rules.indexOf(`match /${c}/{id}`));
+    const body = block.slice(0, block.indexOf('}\n') + 1);
+    expect(body).toMatch(/allow read: if isAdmin\(\) \|\| \(signedIn\(\) && resource\.data\.status == 'published'\)/);
+    expect(body).toMatch(/allow create, update: if isAdmin\(\)/);
+    expect(body).toMatch(/allow delete: if isAdmin\(\)/);
+  });
+  test('admin comes from the signed token claim, and everything else stays denied', () => {
+    expect(rules).toMatch(/request\.auth\.token\.admin == true/);
+    expect(rules).not.toMatch(/token\.email/);
+    expect(rules.trim().endsWith('}')).toBe(true);
+    expect(rules).toMatch(/match \/\{document=\*\*\} \{\s*allow read, write: if false;/);
+  });
+  test('students can only touch their own progress, notes and enrollments', () => {
+    ['hubProgress/{topicId}', 'hubNotes/{topicId}', 'enrollments/{batchId}'].forEach((p) => {
+      const block = rules.slice(rules.indexOf(`match /users/{uid}/${p}`));
+      expect(block.slice(0, 400)).toMatch(/isOwner\(uid\)/);
+    });
+  });
+});
+
+describe('admin validation for batches, teachers and DPPs', () => {
+  test('batch needs a name and class; cover must be https; subjects and teachers are saved as ids', () => {
+    expect(MANAGERS.batches.build({ name: '', classId: '' }).errors).toMatchObject({ classId: expect.any(String), name: expect.any(String) });
+    expect(MANAGERS.batches.build({ classId: 'neet', name: 'B', coverUrl: 'http://x.com/a.png' }).errors.coverUrl).toBeTruthy();
+    const ok = MANAGERS.batches.build({ classId: 'class-9', name: ' Foundation ', session: '2026-27', coverUrl: 'https://img.example.com/a.png', subjectIds: ['s1', '', 's2'], teacherIds: ['t1'] });
+    expect(ok.errors).toEqual({});
+    expect(ok.data).toMatchObject({ name: 'Foundation', subjectIds: ['s1', 's2'], teacherIds: ['t1'], classId: 'class-9' });
+  });
+  test('teacher needs a name', () => {
+    expect(MANAGERS.teachers.build({ name: ' ' }).errors.name).toBeTruthy();
+    expect(MANAGERS.teachers.build({ name: 'Ms A', photoUrl: 'javascript:alert(1)' }).errors.photoUrl).toBeTruthy();
+    expect(MANAGERS.teachers.build({ name: 'Ms A' }).errors).toEqual({});
+  });
+  test('DPP needs a chapter and a Drive or https link; the topic is optional', () => {
+    const scope = { classId: 'class-9', subjectId: 's1', chapterId: 'c1', title: 'DPP 1' };
+    expect(MANAGERS.dpps.build({ ...scope }).errors.driveUrl).toBeTruthy();
+    expect(MANAGERS.dpps.build({ ...scope, driveUrl: 'https://example.com/x.pdf' }).errors.driveUrl).toBeTruthy();
+    expect(MANAGERS.dpps.build({ ...scope, externalUrl: 'ftp://x.com/a' }).errors.externalUrl).toBeTruthy();
+    expect(MANAGERS.dpps.build({ ...scope, externalUrl: 'https://quiz.example.com/1' }).errors).toEqual({});
+    const ok = MANAGERS.dpps.build({ ...scope, topicId: 't1', driveUrl: 'https://drive.google.com/file/d/1AbCdEfGhIjK/view', dueDate: '2026-12-01' });
+    expect(ok.errors).toEqual({});
+    expect(ok.data).toMatchObject({ topicId: 't1', chapterId: 'c1', dueDate: '2026-12-01' });
+    expect(MANAGERS.dpps.build({ ...scope, externalUrl: 'https://q.com', dueDate: 'soon' }).errors.dueDate).toBeTruthy();
+  });
+  test('question can be marked as DPP and the difficulty defaults to Easy', () => {
+    const r = MANAGERS.questions.build({ classId: 'neet', subjectId: 's', chapterId: 'c', topicId: 't', question: 'Q?', o0: 'a', o1: 'b', o2: 'c', o3: 'd', correctIndex: '2', set: 'dpp' });
+    expect(r.errors).toEqual({});
+    expect(r.data).toMatchObject({ set: 'dpp', correctIndex: 2, difficulty: 'Easy' });
+  });
+});

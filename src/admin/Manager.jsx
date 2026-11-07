@@ -4,9 +4,9 @@ import { ArrowDown, ArrowUp, Eye, EyeOff, Pencil, Plus, Trash2, Search, External
 import { MANAGERS } from './configs';
 import { Field, HierarchyPicker, ConfirmDialog, Notice, StatusBadge, Pager } from './ui';
 import { useAdmin } from './AdminContext';
-import { createItem, updateItem, deleteItem, applyOrder, describeError } from '../cms/store';
+import { createItem, createMany, updateItem, deleteItem, applyOrder, describeError } from '../cms/store';
 import { clearSocialCache } from '../cms/hooks';
-import { CLASSES, byOrder, nextOrder, reorderPairs } from '../cms/model';
+import { allClasses, byOrder, nextOrder, reorderPairs, difficultyLabel, DIFFICULTIES } from '../cms/model';
 import { parseYouTube, youTubeEmbedUrl } from '../cms/youtube';
 import { parseDrive, DRIVE_SHARING_HINT } from '../cms/drive';
 import { PLATFORMS } from '../cms/links';
@@ -14,7 +14,7 @@ import { PLATFORMS } from '../cms/links';
 const PAGE = 10;
 const SCOPE_KEYS = ['classId', 'subjectId', 'chapterId', 'topicId'];
 const itemTitle = (item, key) => String(item[key] || '');
-const className = (id) => (CLASSES.find((c) => c.id === id) || {}).title || id;
+const className = (data, id) => (allClasses(data).find((c) => c.id === id) || {}).title || id;
 
 function Preview({ kind, form }) {
   if (kind === 'lectures') {
@@ -74,6 +74,7 @@ function ManagerInner({ name, cfg }) {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState(null);
   const [confirm, setConfirm] = useState(null);
+  const [bulk, setBulk] = useState(null);
 
   const list = useMemo(() => data[name] || [], [data, name]);
 
@@ -93,7 +94,7 @@ function ManagerInner({ name, cfg }) {
     const sub = (data.subjects || []).find((s) => s.id === x.subjectId);
     const ch = (data.chapters || []).find((c) => c.id === x.chapterId);
     const tp = (data.topics || []).find((t) => t.id === x.topicId);
-    return [x.classId && className(x.classId), sub && sub.name, ch && ch.title, tp && tp.title].filter(Boolean).join(' › ');
+    return [x.classId && className(data, x.classId), sub && sub.name, ch && ch.title, tp && tp.title].filter(Boolean).join(' › ');
   };
 
   const openNew = () => {
@@ -101,14 +102,14 @@ function ManagerInner({ name, cfg }) {
     SCOPE_KEYS.slice(0, cfg.levels).forEach((k) => {
       scope[k] = filter[k] || '';
     });
-    setForm({ ...scope, order: String(nextOrder(siblings(scope))), difficulty: 'Basic', type: 'Chapter Notes', correctIndex: '0', platform: '', active: true });
+    setForm({ ...scope, order: String(nextOrder(siblings(scope))), difficulty: 'Easy', type: 'Chapter Notes', correctIndex: '0', set: 'practice', platform: '', active: true, subjectIds: [], teacherIds: [] });
     setErrors({});
     setMsg(null);
     setEditing('new');
     setTimeout(() => formRef.current && formRef.current.scrollIntoView && formRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0);
   };
   const openEdit = (item) => {
-    setForm(cfg.toForm ? cfg.toForm(item) : { ...item, order: String(item.order || 0) });
+    setForm(cfg.toForm ? cfg.toForm(item) : { ...item, order: String(item.order || 0), subjectIds: item.subjectIds || [], teacherIds: item.teacherIds || [] });
     setErrors({});
     setMsg(null);
     setEditing(item);
@@ -153,6 +154,24 @@ function ManagerInner({ name, cfg }) {
     if (ok) close();
   };
 
+  const saveBulk = async (status) => {
+    if (busy) return;
+    const topicsHere = (data.topics || []).filter((t) => t.chapterId === bulk.chapterId);
+    const rows = String(bulk.lines || '').split('\n').map((l) => l.trim()).filter(Boolean).map((line, i) => {
+      const [title, level] = line.split('|').map((x) => x.trim());
+      const diff = DIFFICULTIES.find((d) => d.toLowerCase() === String(level || '').toLowerCase()) || 'Easy';
+      return { raw: { classId: bulk.classId, subjectId: bulk.subjectId, chapterId: bulk.chapterId, title, difficulty: diff, order: String(nextOrder(topicsHere) + i) } };
+    });
+    if (!bulk.classId || !bulk.subjectId || !bulk.chapterId) return setBulk((b) => ({ ...b, error: 'Choose the course, subject and chapter first.' }));
+    if (!rows.length) return setBulk((b) => ({ ...b, error: 'Type at least one topic.' }));
+    if (rows.length > 100) return setBulk((b) => ({ ...b, error: 'Add up to 100 topics at a time.' }));
+    const built = rows.map((r) => cfg.build(r.raw));
+    const bad = built.findIndex((b2) => Object.keys(b2.errors).length);
+    if (bad >= 0) return setBulk((b) => ({ ...b, error: `Line ${bad + 1}: ${Object.values(built[bad].errors)[0]}` }));
+    const ok = await run(() => createMany(name, built.map((b2) => ({ ...b2.data, status })), user), `${built.length} topics ${status === 'published' ? 'published' : 'saved as drafts'}.`);
+    if (ok) setBulk(null);
+  };
+
   const toggle = (item) => {
     if (cfg.noStatus) return run(() => updateItem(name, item.id, { active: item.active === false }), item.active === false ? 'Link is now active.' : 'Link hidden from students.');
     const next = item.status === 'published' ? 'unpublished' : 'published';
@@ -167,7 +186,7 @@ function ManagerInner({ name, cfg }) {
 
   const setField = (k, v) => setForm((f) => ({ ...f, [k]: v }));
   const isOrdered = !!cfg.fields.find((f) => f.key === 'order');
-  const dependents = { subjects: 'chapters', chapters: 'topics', topics: 'lectures, notes and questions' }[name];
+  const dependents = { courses: 'batches, subjects and content', batches: 'subjects', subjects: 'chapters', chapters: 'topics', topics: 'lectures, notes and questions' }[name];
 
   return (
     <div className="ap-stack" style={{ gap: 16 }}>
@@ -176,21 +195,58 @@ function ManagerInner({ name, cfg }) {
           <h1>{cfg.title}</h1>
           <p>{filtered.length} {filtered.length === 1 ? cfg.singular : `${cfg.singular}s`}{list.length !== filtered.length ? ` shown of ${list.length}` : ''}</p>
         </div>
-        <button type="button" className="ap-btn ap-btn--primary" onClick={openNew}><Plus size={18} aria-hidden="true" /> Add {cfg.singular}</button>
+        <div className="ap-row ap-row--wrap">
+          {name === 'topics' && <button type="button" className="ap-btn ap-btn--ghost" onClick={() => { setBulk({ classId: filter.classId, subjectId: filter.subjectId, chapterId: filter.chapterId, lines: '' }); setEditing(null); }}>Add many topics</button>}
+          <button type="button" className="ap-btn ap-btn--primary" onClick={() => { setBulk(null); openNew(); }}><Plus size={18} aria-hidden="true" /> Add {cfg.singular}</button>
+        </div>
       </header>
 
       {msg && <Notice kind={msg.kind}>{msg.text}</Notice>}
 
+      {bulk && (
+        <section className="ap-card ap-panel adm-form" aria-label="Add many topics">
+          <h2>Add many topics at once</h2>
+          <Notice>Type one topic per line. End a line with <code>| Medium</code> or <code>| Hard</code> to set the difficulty (Easy is the default). Order follows the lines you type.</Notice>
+          <div className="adm-form__cols">
+            <HierarchyPicker idPrefix="b" levels={3} required value={bulk} onChange={(v) => setBulk((b) => ({ ...b, ...v }))} data={data} />
+            <Field id="b-lines" label="Topics (one per line)" required error={bulk.error}>
+              <textarea id="b-lines" className="ap-input" rows={8} value={bulk.lines} onChange={(e) => setBulk((b) => ({ ...b, lines: e.target.value, error: '' }))} />
+            </Field>
+          </div>
+          <div className="ap-row ap-row--wrap adm-form__actions">
+            <button type="button" className="ap-btn ap-btn--ghost" disabled={busy} onClick={() => saveBulk('draft')}>Save all as drafts</button>
+            <button type="button" className="ap-btn ap-btn--primary" disabled={busy} onClick={() => saveBulk('published')}>Publish all</button>
+            <button type="button" className="ap-btn ap-btn--ghost" disabled={busy} onClick={() => setBulk(null)}>Cancel</button>
+          </div>
+        </section>
+      )}
+
       {editing && (
         <section ref={formRef} className="ap-card ap-panel adm-form" aria-label={editing === 'new' ? `Add ${cfg.singular}` : `Edit ${cfg.singular}`}>
           <h2>{editing === 'new' ? `Add ${cfg.singular}` : `Edit ${cfg.singular}`}</h2>
+          {cfg.help && <Notice>{cfg.help}</Notice>}
           {cfg.drive && <Notice>{DRIVE_SHARING_HINT}</Notice>}
           <form onSubmit={(e) => e.preventDefault()} noValidate className="adm-form__grid">
             <div className="adm-form__cols">
-              {cfg.levels > 0 && <HierarchyPicker idPrefix="f" value={form} onChange={(v) => setForm((f) => ({ ...f, ...v }))} levels={cfg.levels} data={data} errors={errors} required />}
+              {cfg.levels > 0 && <HierarchyPicker idPrefix="f" optionalLevel={cfg.optionalLevel} value={form} onChange={(v) => setForm((f) => ({ ...f, ...v }))} levels={cfg.levels} data={data} errors={errors} required />}
               {cfg.fields.map((f) => {
                 const id = `f-${f.key}`;
                 const common = { id, className: 'ap-input', value: form[f.key] == null ? '' : form[f.key], onChange: (e) => setField(f.key, e.target.value), 'aria-invalid': !!errors[f.key], 'aria-describedby': errors[f.key] ? `${id}-err` : f.help ? `${id}-help` : undefined };
+                if (f.type === 'multi') {
+                  const pool = (data[f.from] || []).filter((x) => f.from !== 'subjects' || x.classId === form.classId).sort(byOrder);
+                  const chosen = form[f.key] || [];
+                  const flip = (rid) => setField(f.key, chosen.includes(rid) ? chosen.filter((x) => x !== rid) : [...chosen, rid]);
+                  return (
+                    <fieldset key={f.key} className="adm-multi">
+                      <legend>{f.label}</legend>
+                      {!pool.length && <small className="ap-muted">{f.from === 'subjects' ? 'Choose a course first, or add subjects for it.' : 'None added yet.'}</small>}
+                      {pool.map((x) => (
+                        <label key={x.id} className="adm-check"><input type="checkbox" checked={chosen.includes(x.id)} onChange={() => flip(x.id)} /> {x.name}{x.status && x.status !== 'published' ? ` (${x.status})` : ''}</label>
+                      ))}
+                      {f.help && <small className="ap-muted">{f.help}</small>}
+                    </fieldset>
+                  );
+                }
                 return (
                   <Field key={f.key} id={id} label={f.label} help={f.help} error={errors[f.key]} required={f.required}>
                     {f.type === 'textarea' ? <textarea rows={3} {...common} />
@@ -202,7 +258,7 @@ function ManagerInner({ name, cfg }) {
                             return <option key={value} value={value}>{typeof o === 'string' ? o : o.label}</option>;
                           })}
                         </select>
-                      ) : <input type={f.type === 'number' ? 'number' : 'text'} min={f.type === 'number' ? 0 : undefined} {...common} />}
+                      ) : <input type={f.type === 'number' ? 'number' : f.type === 'date' ? 'date' : 'text'} min={f.type === 'number' ? 0 : undefined} {...common} />}
                   </Field>
                 );
               })}
@@ -259,7 +315,10 @@ function ManagerInner({ name, cfg }) {
                     {name === 'socialLinks' ? `${(PLATFORMS.find((p) => p.id === item.platform) || {}).label || item.platform} · ${item.url}` : parentLabel(item)}
                     {name === 'lectures' && item.teacherName ? ` · ${item.teacherName}` : ''}
                     {name === 'resources' && item.type ? ` · ${item.type}` : ''}
-                    {name === 'topics' && item.difficulty ? ` · ${item.difficulty}` : ''}
+                    {name === 'topics' && item.difficulty ? ` · ${difficultyLabel(item.difficulty)}` : ''}
+                    {name === 'batches' ? ` · ${(item.subjectIds || []).length} subject(s)${item.session ? ` · ${item.session}` : ''}` : ''}
+                    {name === 'teachers' && item.subjects ? ` · ${item.subjects}` : ''}
+                    {name === 'dpps' ? ` · ${item.topicId ? 'Topic DPP' : 'Chapter DPP'}${item.dueDate ? ` · Due ${item.dueDate}` : ''}` : ''}
                   </span>
                 </div>
                 {cfg.noStatus ? <span className={`ap-badge ${item.active === false ? '' : 'ap-badge--ok'}`}>{item.active === false ? 'Inactive' : 'Active'}</span> : <StatusBadge status={item.status} />}
@@ -269,7 +328,7 @@ function ManagerInner({ name, cfg }) {
                     <button type="button" className="ap-iconbtn" aria-label={`Move ${itemTitle(item, cfg.titleKey)} down`} title="Move down" disabled={busy} onClick={() => move(item, 'down')}><ArrowDown size={16} /></button>
                   </>}
                   {name === 'lectures' && item.youtubeVideoId && <a className="ap-iconbtn" href={`https://www.youtube.com/watch?v=${item.youtubeVideoId}`} target="_blank" rel="noopener noreferrer" aria-label="Open on YouTube" title="Open on YouTube"><ExternalLink size={16} /></a>}
-                  {name === 'resources' && item.driveUrl && <a className="ap-iconbtn" href={item.driveUrl} target="_blank" rel="noopener noreferrer" aria-label="Open in Google Drive" title="Open in Google Drive"><ExternalLink size={16} /></a>}
+                  {(name === 'resources' || name === 'dpps') && (item.driveUrl || item.externalUrl) && <a className="ap-iconbtn" href={item.driveUrl || item.externalUrl} target="_blank" rel="noopener noreferrer" aria-label="Open in Google Drive" title="Open in Google Drive"><ExternalLink size={16} /></a>}
                   <button type="button" className="ap-iconbtn" aria-label={`${(cfg.noStatus ? item.active !== false : item.status === 'published') ? 'Unpublish' : 'Publish'} ${itemTitle(item, cfg.titleKey)}`} title={(cfg.noStatus ? item.active !== false : item.status === 'published') ? 'Unpublish' : 'Publish'} disabled={busy} onClick={() => toggle(item)}>
                     {(cfg.noStatus ? item.active !== false : item.status === 'published') ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>

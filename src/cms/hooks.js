@@ -5,7 +5,7 @@ import { auth } from '../components/Login/firebase';
 import { loadContent, loadSocialLinks, describeError, hasBackend } from './store';
 import { visibleData } from './model';
 
-const EMPTY = { subjects: [], chapters: [], topics: [], lectures: [], resources: [], questions: [], socialLinks: [] };
+const EMPTY = { courses: [], batches: [], teachers: [], dpps: [], subjects: [], chapters: [], topics: [], lectures: [], resources: [], questions: [], socialLinks: [] };
 
 /**
  * Admin status comes from the signed Firebase ID token (custom claim `admin`), never from
