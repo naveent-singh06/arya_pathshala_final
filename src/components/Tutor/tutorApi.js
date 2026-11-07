@@ -59,6 +59,14 @@ export function createNdjsonParser() {
   };
 }
 
+// The server normally answers with JSON. Anything else comes from the hosting layer, not the Tutor itself.
+function unreadableFailure(status) {
+  if (status === 404) return "The AI Tutor service was not found at this website address (error 404). The site owner should check the deployment.";
+  if (status === 401 || status === 403) return `The website's host blocked the AI Tutor request (error ${status}). If this is a Vercel Preview, Deployment Protection may be on; ask the site owner.`;
+  if (status >= 500) return `The AI Tutor service crashed or timed out (error ${status}). Please try again; if it keeps happening the site owner should check the Vercel function logs.`;
+  return `The AI Tutor is unavailable right now (error ${status}).`;
+}
+
 function badResponse() {
   return new TutorApiError("The AI Tutor sent an unreadable answer. Please try again.", {
     code: "bad_response",
@@ -116,7 +124,7 @@ export async function* streamTutorReply({
     }
     const retry = Number(response.headers && response.headers.get && response.headers.get("Retry-After"));
     throw new TutorApiError(
-      (data && data.error) || `The AI Tutor is unavailable right now (error ${response.status}).`,
+      (data && data.error) || unreadableFailure(response.status),
       {
         code: (data && data.code) || "http_error",
         status: response.status,

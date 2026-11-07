@@ -54,3 +54,13 @@ to `index.html` and allows `/api/tutor` up to 60 seconds.
   students to verify important answers. Image/PDF questions, voice and study-material search (RAG)
   are planned for later phases and are not in this release.
 - Usage limits are per student: `TUTOR_RATE_PER_MINUTE` (default 8) and `TUTOR_DAILY_LIMIT` (default 100).
+
+## 7. If the AI Tutor says it is unavailable
+Open `https://<your-site>/api/tutor-status` in a browser. It lists, without showing any value, whether `LLM_API_KEY` and
+`FIREBASE_SERVICE_ACCOUNT_JSON` are `present`, `missing` or `invalid`, plus the provider host and model. If both are present,
+sign in as admin and call `/api/tutor-status?probe=1` with your ID token to test the real provider key and Firestore.
+- `llmApiKey: missing` -> add `LLM_API_KEY` (server-only; no `REACT_APP_` prefix) in Vercel -> Settings -> Environment Variables, for **Preview and Production**.
+- `firebaseServiceAccount: missing/invalid` -> add `FIREBASE_SERVICE_ACCOUNT_JSON` (whole JSON or its base64) for Preview and Production. It must be a key of the SAME Firebase project the website uses.
+- Firestore must be created (otherwise usage limits fail with "can't check usage limits").
+- **Environment variable changes only apply to a new deployment**: redeploy after adding them.
+- An error 404/401 from the website host (not a Tutor message) means the function is not deployed or Vercel Deployment Protection is blocking it.

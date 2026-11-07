@@ -126,6 +126,15 @@ describe("streamTutorReply", () => {
     });
   });
 
+  test.each([
+    [404, /not found at this website address/],
+    [401, /host blocked.*Deployment Protection/],
+    [502, /crashed or timed out/],
+  ])("explains a non-JSON %s failure from the hosting layer", async (status, message) => {
+    const response = { ok: false, status, headers: { get: () => null }, json: async () => { throw new Error("html"); } };
+    await expect(collect(streamTutorReply(baseArgs(async () => response)))).rejects.toMatchObject({ status, message: expect.stringMatching(message) });
+  });
+
   test("reports an error event sent in the middle of the stream", async () => {
     const response = okResponse('{"type":"delta","text":"Par"}\n{"type":"error","code":"timeout","message":"The AI took too long."}\n');
     await expect(collect(streamTutorReply(baseArgs(async () => response)))).rejects.toMatchObject({
