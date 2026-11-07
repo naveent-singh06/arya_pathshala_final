@@ -24,6 +24,7 @@ import LecturePlayer from "./pages/LecturePlayer";
 import NotFound from "./pages/NotFound";
 import HubLayout from "./pages/hub/HubLayout";
 import HubHome from "./pages/hub/HubHome";
+import SignedInRedirect from "./components/Login/SignedInRedirect";
 import HubCourse from "./pages/hub/HubCourse";
 import HubBatch from "./pages/hub/HubBatch";
 import HubSubject from "./pages/hub/HubSubject";
@@ -118,8 +119,14 @@ function AppContent() {
       // (set by scripts/set-admin-claim.js). It is never derived from an email address or a
       // form choice. The token refreshes by itself about hourly; signing in again picks up a new claim.
       setAdminChecked(false);
-      getIdTokenResult(currentUser)
+      // A session that started before the claim was granted still holds an old token, so refresh it
+      // once per browser session (not on every page view) before deciding.
+      const key = `ap-claims-${currentUser.uid}`;
+      let refreshed = false;
+      try { refreshed = sessionStorage.getItem(key) === "1"; } catch (e) { refreshed = false; }
+      getIdTokenResult(currentUser, !refreshed)
         .then((r) => {
+          try { sessionStorage.setItem(key, "1"); } catch (e) { /* storage unavailable: fine */ }
           if (ticket !== latest) return;
           setIsAdmin(r.claims.admin === true);
           setAdminChecked(true);
@@ -209,8 +216,8 @@ function AppContent() {
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/features" element={<Features />} />
-        <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
-        <Route path="/register" element={user ? <Navigate to="/" replace /> : <Register />} />
+        <Route path="/login" element={user ? <SignedInRedirect adminChecked={adminChecked} isAdmin={isAdmin} /> : <Login />} />
+        <Route path="/register" element={user ? <SignedInRedirect adminChecked={adminChecked} isAdmin={isAdmin} /> : <Register />} />
         <Route path="/facerecog" element={<FaceRecog />} />
         <Route path="/personalattendance" element={<PersonalAttendance />} />
         <Route path="/attendance" element={<Attendance />} />

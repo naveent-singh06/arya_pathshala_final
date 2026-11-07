@@ -52,3 +52,9 @@ Uploading PDFs or images: Firebase Storage is not enabled (it needs a billing pl
 
 ## 7. Not verified here
 Firestore rules were reviewed by hand, not run against the emulator or your live project. After publishing, test: student cannot write, draft is invisible to students, admin can save.
+
+## 8. Sign-in troubleshooting
+- Google or email sign-in now shows the real reason. `This website address is not authorised`: add the site's domain (including each Vercel Preview address you test on) in Firebase → Authentication → Settings → Authorized domains.
+- `The email or password is not correct`: an account created with Google has no password. Use the Google button.
+- If the Vercel Preview itself asks you to log in to Vercel, Deployment Protection is on. That is a Vercel setting (Project → Settings → Deployment Protection). It is why the browser console can show `manifest.json` CORS errors; it does not stop Firebase sign-in, but visitors must pass Vercel's login first. Turn it off for a public preview only if you accept the page being public.
+- After sign-in admins go to `/dashboardadmin`, students to `/dashboard`.
