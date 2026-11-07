@@ -35,7 +35,7 @@ const Login = () => {
       setIsAdmin(admin);
 
       setUser(user);
-      navigate("/");
+      navigate(admin ? "/dashboardadmin" : "/");
     } catch (error) {
       setError(error.message);
     }
