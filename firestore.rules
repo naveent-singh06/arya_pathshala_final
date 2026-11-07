@@ -6,10 +6,10 @@ rules_version = '2';
 // users/{uid}/chats/{chatId}/messages/{msgId} -> messages of a chat (owner only)
 // tutorUsage/{uid}                            -> rate-limit counters, written ONLY by the
 //                                                server (Firebase Admin bypasses these rules)
-// subjects, chapters, topics, lectures, resources, questions, socialLinks
-//                                             -> learning content managed from /admin/content.
+// courses, batches, teachers, subjects, chapters, topics, lectures, resources, dpps, questions,
+// socialLinks                                 -> learning content managed from /admin/content.
 //                                                Only admins write; students read published items.
-// users/{uid}/hubProgress, users/{uid}/hubNotes -> a student's own progress and personal notes
+// users/{uid}/hubProgress, hubNotes, enrollments -> a student's own progress, personal notes, joined batches
 // Admin = the Firebase Auth custom claim `admin: true` (set by scripts/set-admin-claim.js).
 // It is part of the signed ID token, so it cannot be edited from the browser or a profile.
 // Everything else is denied.
@@ -20,7 +20,7 @@ service cloud.firestore {
       return request.auth != null && request.auth.uid == uid;
     }
 
-    function validSubject(v) {
+    function validChatSubject(v) {
       return v in ['general', 'mathematics', 'physics', 'chemistry', 'biology', 'english', 'computer-science'];
     }
 
@@ -36,7 +36,7 @@ service cloud.firestore {
       return d.keys().hasOnly(['title', 'subject', 'classLevel', 'language', 'preview', 'searchText', 'createdAt', 'updatedAt'])
         && d.keys().hasAll(['title', 'subject', 'classLevel', 'language', 'createdAt', 'updatedAt'])
         && d.title is string && d.title.size() > 0 && d.title.size() <= 100
-        && validSubject(d.subject)
+        && validChatSubject(d.subject)
         && validLevel(d.classLevel)
         && validLanguage(d.language)
         && d.createdAt == request.time
@@ -45,7 +45,7 @@ service cloud.firestore {
 
     function validChatUpdate(before, after) {
       return after.diff(before).affectedKeys().hasOnly(['subject', 'classLevel', 'language', 'preview', 'searchText', 'updatedAt'])
-        && validSubject(after.subject)
+        && validChatSubject(after.subject)
         && validLevel(after.classLevel)
         && validLanguage(after.language)
         && (!('preview' in after) || (after.preview is string && after.preview.size() <= 300))
