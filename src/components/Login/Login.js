@@ -1,75 +1,118 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth, firebaseConfigError } from "./firebase";
-import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, getIdTokenResult } from "firebase/auth";
-import { useUser } from "../../UserContext"; // Import global context
+import {
+  GoogleAuthProvider,
+  signInWithPopup,
+  signInWithEmailAndPassword,
+  onAuthStateChanged,
+  getIdTokenResult,
+  signOut,
+} from "firebase/auth";
+import { useUser } from "../../UserContext";
 import styles from "./Login.module.css";
+
+const getLoginError = (code) => {
+  switch (code) {
+    case "auth/invalid-email":
+      return "Please enter a valid email address.";
+    case "auth/user-not-found":
+    case "auth/wrong-password":
+    case "auth/invalid-credential":
+      return "Email or password is incorrect. Please check and try again.";
+    case "auth/too-many-requests":
+      return "Too many failed attempts. Please try again later.";
+    case "auth/network-request-failed":
+      return "Network error. Check your internet connection and try again.";
+    case "auth/user-disabled":
+      return "This account has been disabled. Please contact the administrator.";
+    case "auth/operation-not-allowed":
+      return "Email/password sign-in is not enabled in Firebase Authentication.";
+    default:
+      return "Login failed. Please try again.";
+  }
+};
 
 const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const [user, setUser] = useState(null);
-  const [role, setRole] = useState("student"); // Default role: student
-  const { setIsAdmin } = useUser(); // Use global context
+  const { setIsAdmin } = useUser();
   const navigate = useNavigate();
 
-  const handleGoogleLogin = async () => {
-    if (!auth) {
-      setError(firebaseConfigError ? firebaseConfigError.message : "Sign-in is not available right now.");
-      return;
-    }
-    const provider = new GoogleAuthProvider();
-    try { 
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
-  
-      // Admin status comes from the signed `admin` claim (App.js listens for it), never from an email address.
-      // Force one token refresh right after sign-in so a freshly granted claim is picked up.
-      let admin = false;
-      try {
-        admin = (await getIdTokenResult(user, true)).claims.admin === true;
-      } catch (e) {
-        admin = false;
-      }
-      setIsAdmin(admin);
-
-      setUser(user);
-      navigate(admin ? "/dashboardadmin" : "/");
-    } catch (error) {
-      setError(error.message);
-    }
-  };
-  
-
   useEffect(() => {
-    if (!auth) return undefined; // Firebase not configured: nobody can be signed in
+    if (!auth) return undefined;
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
     });
     return unsubscribe;
   }, []);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!username || !password) {
-      setError("Please fill in all fields");
-    } else {
-      setError("");
-      
-      // This form does not sign anyone in, so it must never grant admin: admin comes only from the verified claim.
-      alert("Login successful!");
-      navigate("/");
+  const finishLogin = async (signedInUser) => {
+    let admin = false;
+    try {
+      const tokenResult = await getIdTokenResult(signedInUser, true);
+      admin = tokenResult.claims.admin === true;
+    } catch (tokenError) {
+      console.error("[ARYA PATHSHALA] Could not verify admin claim:", tokenError.code || tokenError.message);
+    }
+    setIsAdmin(admin);
+    navigate(admin ? "/dashboardadmin" : "/");
+  };
+
+  const handleGoogleLogin = async () => {
+    if (!auth) {
+      setError(firebaseConfigError?.message || "Sign-in is not available right now.");
+      return;
+    }
+    setError("");
+    setLoading(true);
+    try {
+      const result = await signInWithPopup(auth, new GoogleAuthProvider());
+      await finishLogin(result.user);
+    } catch (loginError) {
+      setError(getLoginError(loginError.code));
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleRegister = () => {
-    navigate("/register");
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!username.trim() || !password) {
+      setError("Please enter both your email address and password.");
+      return;
+    }
+    if (!auth) {
+      setError(firebaseConfigError?.message || "Sign-in is not available right now.");
+      return;
+    }
+
+    setError("");
+    setLoading(true);
+    try {
+      const credential = await signInWithEmailAndPassword(
+        auth,
+        username.trim(),
+        password
+      );
+      await finishLogin(credential.user);
+    } catch (loginError) {
+      setError(getLoginError(loginError.code));
+    } finally {
+      setLoading(false);
+    }
   };
 
+  const handleRegister = () => navigate("/register");
+
   const handleLogout = async () => {
-    await auth.signOut();
+    if (!auth) return;
+    await signOut(auth);
     setUser(null);
+    setIsAdmin(false);
     navigate("/login");
   };
 
@@ -85,18 +128,20 @@ const Login = () => {
               </p>
             )}
             <div className={styles.socialLoginContainer}>
-              <button onClick={handleGoogleLogin} className={styles.googleLoginBtn}>Google</button>
-              <button className={styles.appleLoginBtn}>Apple</button>
+              <button type="button" onClick={handleGoogleLogin} className={styles.googleLoginBtn} disabled={loading}>Google</button>
+              <button type="button" className={styles.appleLoginBtn} disabled>Apple</button>
             </div>
             <p className={styles.or}>or</p>
             <form onSubmit={handleSubmit} className={styles.loginForm}>
               <div className={styles.formGroup}>
                 <label htmlFor="username">Email address</label>
                 <input
-                  type="text"
+                  type="email"
                   id="username"
+                  autoComplete="username"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
+                  required
                 />
               </div>
               <div className={styles.formGroup}>
@@ -104,29 +149,17 @@ const Login = () => {
                 <input
                   type="password"
                   id="password"
+                  autoComplete="current-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  required
                 />
               </div>
-
-              {/* Dropdown for selecting user role */}
-              <div className={styles.formGroup}>
-                <label htmlFor="role">Log in as?</label>
-                <select
-                  id="role"
-                  value={role}
-                  onChange={(e) => setRole(e.target.value)}
-                  className={styles.dropdown}
-                >
-                  <option value="student">Student</option>
-                  <option value="admin">Admin</option>
-                </select>
-              </div>
-
-              {error && <p className={styles.error}>{error}</p>}
-              <button type="submit" className={styles.submitBtn}>Log In</button>
+              {error && <p className={styles.error} role="alert">{error}</p>}
+              <button type="submit" className={styles.submitBtn} disabled={loading}>
+                {loading ? "Logging in..." : "Log In"}
+              </button>
             </form>
-
             <p className={styles.switchLine}>
               Don't have an account?{" "}
               <span
