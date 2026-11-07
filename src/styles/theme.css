@@ -1,0 +1,321 @@
+/*
+  ARYA PATHSHALA design system.
+
+  Palette (named, so pages never invent a new blue):
+    ink       #14213d  headings and strong text
+    brand     #2457a7  royal blue (links, primary buttons)
+    sky       #0099ff  the existing light blue (focus ring, hover accents)
+    marigold  #f4a300  one warm accent, used sparingly for the main call to action
+    paper     #f5f8fd  page background behind cards
+
+  Type: Bricolage Grotesque for headings, Hind for reading text (Hind also covers Devanagari,
+  so Hindi and Hinglish content render in the same family).
+*/
+
+:root {
+  --ap-ink: #14213d;
+  --ap-text: #263349;
+  --ap-muted: #667085;
+  --ap-brand: #2457a7;
+  --ap-brand-strong: #1b4587;
+  --ap-brand-soft: #eaf2ff;
+  --ap-sky: #0099ff;
+  --ap-marigold: #f4a300;
+  --ap-marigold-strong: #dd9100;
+  --ap-marigold-soft: #fff3d1;
+  --ap-paper: #f5f7fb;
+  --ap-card: #ffffff;
+  --ap-line: #e1e8f4;
+  --ap-ok: #137a52;
+  --ap-ok-soft: #e1f5ec;
+  --ap-bad: #b73333;
+  --ap-bad-soft: #fbe6e6;
+
+  --ap-science: #0f8b6d;
+  --ap-science-soft: #dff5ee;
+  --ap-english: #c27a00;
+  --ap-english-soft: #fff0cf;
+  --ap-maths: #2457a7;
+  --ap-maths-soft: #e5edfb;
+  --ap-physics: #6a4bd0;
+  --ap-physics-soft: #ece8fb;
+  --ap-chemistry: #c2410c;
+  --ap-chemistry-soft: #fde9dd;
+
+  /* the seven petal colours of the official logo, used only as thin accents */
+  --ap-rainbow: linear-gradient(90deg, #8e3a9a, #2f6fc0, #1aa3b8, #7fbf2a, #f6c21c, #f08a1c, #d8312b);
+
+  /* Theme-aware surfaces. The light values below are the White Glass theme; the other three
+     themes override them in themes.css through <html data-ap-theme="...">. */
+  --ap-deep: #14213d;            /* always-dark panels (footer, banners, video) */
+  --ap-btn: #2457a7;
+  --ap-btn-strong: #1b4587;
+  --ap-surface: #ffffff;         /* solid surface for functional UI (quiz, lists, inputs) */
+  --ap-input-bg: #ffffff;
+  --ap-header-bg: rgba(255, 255, 255, 0.9);
+  --ap-topbar-bg: rgba(255, 255, 255, 0.94);
+  --ap-side-bg: #ffffff;
+  --ap-page-bg: transparent;   /* the page colour is painted by <body>, so the galaxy canvas shows through */
+  --ap-inset: var(--ap-paper);
+  --ap-hero-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.72) 0%, rgba(234, 242, 255, 0.85) 100%);
+  --ap-progress-track: #e7edf8;
+  --ap-disabled-bg: #eef1f7;
+  --ap-disabled-text: #7a869c;
+  --ap-marigold-text: #6b4300;
+  --ap-glass: none;
+  --ap-classroom-opacity: 0.07;
+  --ap-wm-opacity: 0.1;
+  --ap-hero-grad: none;
+  /* names requested for the theme system (prefixed so they cannot clash with the per-subject
+     --accent used inside components) */
+  --ap-background: var(--ap-paper);
+  --ap-surface-elevated: var(--ap-surface);
+  --ap-text-primary: var(--ap-ink);
+  --ap-text-secondary: var(--ap-muted);
+  --ap-accent: var(--ap-brand);
+  --ap-accent-secondary: var(--ap-sky);
+  --ap-border: var(--ap-line);
+  --ap-glow: rgba(36, 87, 167, 0.25);
+  --ap-particle-color: 36, 87, 167;
+
+  --ap-r-sm: 8px;
+  --ap-r-md: 12px;
+  --ap-r-lg: 18px;
+  --ap-shadow: 0 1px 2px rgba(12, 33, 73, 0.06), 0 6px 18px rgba(12, 33, 73, 0.07);
+  --ap-shadow-lift: 0 2px 4px rgba(12, 33, 73, 0.08), 0 14px 30px rgba(12, 33, 73, 0.12);
+
+  --ap-font-display: 'Bricolage Grotesque Variable', 'Hind', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --ap-font-body: 'Hind', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+body {
+  font-family: var(--ap-font-body);
+  color: var(--ap-text);
+}
+
+/* Visible keyboard focus everywhere in the redesigned pages. */
+.ap-scope a:focus-visible,
+.ap-scope button:focus-visible,
+.ap-scope select:focus-visible,
+.ap-scope input:focus-visible,
+.ap-scope summary:focus-visible,
+.ap-scope [tabindex]:focus-visible {
+  outline: 3px solid var(--ap-sky);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+.ap-scope {
+  font-family: var(--ap-font-body);
+  color: var(--ap-text);
+  line-height: 1.55;
+}
+
+.ap-scope h1,
+.ap-scope h2,
+.ap-scope h3,
+.ap-scope h4 {
+  font-family: var(--ap-font-display);
+  color: var(--ap-ink);
+  line-height: 1.15;
+  margin: 0;
+  letter-spacing: -0.01em;
+  text-align: inherit; /* an unscoped h1 rule elsewhere in the app centres headings */
+}
+
+.ap-scope p {
+  margin: 0;
+}
+
+.ap-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.ap-container {
+  width: 100%;
+  max-width: 1200px;
+  margin-inline: auto;
+  padding-inline: 20px;
+  box-sizing: border-box;
+}
+
+/* Buttons */
+.ap-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 20px;
+  border-radius: var(--ap-r-md);
+  border: 1.5px solid transparent;
+  font: 600 1rem/1 var(--ap-font-body);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+.ap-btn:active {
+  transform: translateY(1px);
+}
+
+.ap-btn--primary {
+  background: var(--ap-btn);
+  color: #fff;
+}
+.ap-btn--primary:hover {
+  background: var(--ap-btn-strong);
+}
+
+.ap-btn--accent {
+  background: var(--ap-marigold);
+  color: var(--ap-ink);
+}
+.ap-btn--accent:hover {
+  background: var(--ap-marigold-strong);
+}
+
+.ap-btn--ghost {
+  background: var(--ap-surface);
+  color: var(--ap-brand);
+  border-color: var(--ap-line);
+}
+.ap-btn--ghost:hover {
+  border-color: var(--ap-brand);
+  background: var(--ap-brand-soft);
+}
+
+.ap-btn--sm {
+  min-height: 36px;
+  padding: 0 14px;
+  font-size: 0.92rem;
+  border-radius: 10px;
+}
+
+.ap-btn[disabled],
+.ap-btn[aria-disabled='true'] {
+  background: var(--ap-disabled-bg);
+  color: var(--ap-disabled-text);
+  border-color: var(--ap-line);
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Cards, chips, badges */
+.ap-card {
+  background: var(--ap-card);
+  border: 1px solid var(--ap-line);
+  border-radius: var(--ap-r-lg);
+  box-shadow: var(--ap-shadow);
+  -webkit-backdrop-filter: var(--ap-glass);
+  backdrop-filter: var(--ap-glass);
+}
+
+.ap-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1.5px solid var(--ap-line);
+  background: var(--ap-surface);
+  color: var(--ap-text);
+  font: 500 0.95rem/1 var(--ap-font-body);
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.ap-chip:hover {
+  border-color: var(--ap-brand);
+}
+.ap-chip[aria-pressed='true'],
+.ap-chip--on {
+  background: var(--ap-btn);
+  border-color: var(--ap-btn);
+  color: #fff;
+}
+
+.ap-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--ap-brand-soft);
+  color: var(--ap-brand);
+  font: 600 0.8rem/1.4 var(--ap-font-body);
+}
+.ap-badge--demo {
+  background: var(--ap-marigold-soft);
+  color: var(--ap-marigold-text);
+}
+.ap-badge--ok {
+  background: var(--ap-ok-soft);
+  color: var(--ap-ok);
+}
+
+.ap-input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: var(--ap-r-md);
+  border: 1.5px solid var(--ap-line);
+  background: var(--ap-input-bg);
+  color: var(--ap-ink);
+  font: 400 1rem/1 var(--ap-font-body);
+  box-sizing: border-box;
+}
+.ap-input:focus {
+  border-color: var(--ap-sky);
+}
+
+/* Responsive card grids: 1 column on phones, 2 on tablets, 3 on desktop. */
+.ap-grid-3 {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: minmax(0, 1fr);
+}
+@media (min-width: 640px) {
+  .ap-grid-3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1000px) {
+  .ap-grid-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Demo-content notice used on pages that show placeholder data. */
+.ap-demo-note {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 12px 14px;
+  border-radius: var(--ap-r-md);
+  background: var(--ap-marigold-soft);
+  color: var(--ap-marigold-text);
+  font-size: 0.95rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ap-scope *,
+  .ap-scope *::before,
+  .ap-scope *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

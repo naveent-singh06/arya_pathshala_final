@@ -1,0 +1,18 @@
+# Files that are NOT part of the Vercel deployment (React website + /api/tutor only).
+# They stay in the repository and are untouched; they are just never uploaded to or built by Vercel.
+
+# Python backend (face recognition, attendance, grading assistant, study planner).
+# It needs a separate host (heavy ML packages, camera access). See docs/PHASE1_SETUP.md.
+backend/
+requirements.txt
+*.py
+
+# Separate Node/Mongo authentication service (not used by the website).
+authentication-backend/
+
+# Student photos and sample documents.
+Arya Pathshala Uploads/
+
+# Not needed to build or run the site.
+docs/
+tests/

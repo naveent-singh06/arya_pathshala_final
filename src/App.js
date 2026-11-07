@@ -1,10 +1,41 @@
 import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { auth } from "./components/Login/firebase";
-import { onAuthStateChanged } from "firebase/auth";
+import { Suspense, lazy, useEffect, useState } from "react";
+import { auth, firebaseConfigError } from "./components/Login/firebase";
+import ConfigNotice from "./components/ConfigNotice/ConfigNotice";
+import { onAuthStateChanged, getIdTokenResult } from "firebase/auth";
 import Header from "./components/Header/Header";
-import HeroSection from "./components/Herosection/Herosection";
-import Dashboard from "./components/Dashboard/Dashboard";
+import Home from "./pages/Home";
+import CourseListing from "./pages/CourseListing";
+import LearnLayout from "./components/learn/LearnLayout";
+import Dashboard from "./pages/Dashboard";
+import MyCourses from "./pages/MyCourses";
+import Batches from "./pages/Batches";
+import Progress from "./pages/Progress";
+import Study from "./pages/Study";
+import LecturesHub from "./pages/LecturesHub";
+import TeacherList from "./pages/TeacherList";
+import TeacherProfile from "./pages/TeacherProfile";
+import StudyMaterial from "./pages/StudyMaterial";
+import Practice from "./pages/Practice";
+import Tests from "./pages/Tests";
+import CourseDetails from "./pages/CourseDetails";
+import CourseLectures from "./pages/CourseLectures";
+import LecturePlayer from "./pages/LecturePlayer";
+import NotFound from "./pages/NotFound";
+import HubLayout from "./pages/hub/HubLayout";
+import HubHome from "./pages/hub/HubHome";
+import SignedInRedirect from "./components/Login/SignedInRedirect";
+import HubCourse from "./pages/hub/HubCourse";
+import HubBatch from "./pages/hub/HubBatch";
+import HubSubject from "./pages/hub/HubSubject";
+import HubTopic from "./pages/hub/HubTopic";
+import AdminLayout from "./admin/AdminLayout";
+import AdminOverview from "./admin/Overview";
+import AdminManager from "./admin/Manager";
+import { ThemeProvider } from "./theme/ThemeContext";
+import ThemePicker from "./theme/ThemePicker";
+import GalaxyBackground from "./components/Galaxy/GalaxyBackground";
+import FloatingSymbols from "./components/Galaxy/FloatingSymbols";
 import DashboardAdmin from "./components/DashboardAdmin/DashboardAdmin";
 import Testimonials from "./components/Testimonials/Testimonials";
 import Login from "./components/Login/Login";
@@ -23,53 +54,170 @@ import List from "./components/DashboardAdmin/List/List";
 import { UserProvider, useUser } from "./UserContext";
 import Footer from "./components/Footer/Footer";
 
+// Loaded on demand so the Markdown/math libraries don't slow down the other pages.
+const Tutor = lazy(() => import("./components/Tutor/Tutor"));
+
+const loadingStyle = {
+  minHeight: "100vh",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  fontWeight: 700,
+  letterSpacing: "0.04em",
+  color: "var(--ap-brand, rgb(15, 69, 155))",
+};
+
+// Pages that draw their own navigation (the learning sidebar, the AI Tutor, the admin dashboard).
+const LEARN_PREFIXES = [
+  "/dashboard", "/my-courses", "/batches", "/lectures", "/teachers", "/study", "/study-material",
+  "/practice", "/tests", "/progress", "/course/", "/hub", "/admin",
+];
+function isOwnLayoutPath(pathname) {
+  if (pathname === "/dashboardadmin" || pathname === "/tutor") return true;
+  return LEARN_PREFIXES.some((prefix) => pathname === prefix.replace(/\/$/, "") || pathname.startsWith(prefix.endsWith("/") ? prefix : `${prefix}/`));
+}
+
 function App() {
   return (
-    <UserProvider>
-      <Router>
-        <AppContent />
-      </Router>
-    </UserProvider>
+    <ThemeProvider>
+      <UserProvider>
+        <Router>
+          <GalaxyBackground />
+          <FloatingSymbols />
+          <AppContent />
+          <ThemePicker />
+        </Router>
+      </UserProvider>
+    </ThemeProvider>
   );
 }
 
 function AppContent() {
   const [user, setUser] = useState(undefined);
-  const { isAdmin, setIsAdmin } = useUser(); // Get isAdmin from UserContext
+  const { isAdmin, setIsAdmin } = useUser(); // Verified-claim result, set below
+  const [adminChecked, setAdminChecked] = useState(false);
   const location = useLocation();
-  const showHeader = !["/dashboard", "/dashboardadmin"].includes(location.pathname);
+  const showHeader = !isOwnLayoutPath(location.pathname);
 
   useEffect(() => {
+    // Firebase not configured: nobody can be signed in, but the public site must still open.
+    if (!auth) {
+      setUser(null);
+      setIsAdmin(false);
+      return undefined;
+    }
+    let latest = 0;
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      console.log("User state changed:", currentUser);
       setUser(currentUser || null);
-
-      // Check if user is admin (Hardcoded Email)
-      if (currentUser?.email === "suryanshhimalayan@gmail.com") {
-        setIsAdmin(true);
-      } else {
+      const ticket = ++latest;
+      if (!currentUser) {
         setIsAdmin(false);
+        setAdminChecked(true);
+        return;
       }
+      // Admin is decided only by the signed `admin` custom claim in the Firebase ID token
+      // (set by scripts/set-admin-claim.js). It is never derived from an email address or a
+      // form choice. The token refreshes by itself about hourly; signing in again picks up a new claim.
+      setAdminChecked(false);
+      // A session that started before the claim was granted still holds an old token, so refresh it
+      // once per browser session (not on every page view) before deciding.
+      const key = `ap-claims-${currentUser.uid}`;
+      let refreshed = false;
+      try { refreshed = sessionStorage.getItem(key) === "1"; } catch (e) { refreshed = false; }
+      getIdTokenResult(currentUser, !refreshed)
+        .then((r) => {
+          try { sessionStorage.setItem(key, "1"); } catch (e) { /* storage unavailable: fine */ }
+          if (ticket !== latest) return;
+          setIsAdmin(r.claims.admin === true);
+          setAdminChecked(true);
+        })
+        .catch(() => {
+          if (ticket !== latest) return;
+          setIsAdmin(false);
+          setAdminChecked(true);
+        });
     });
 
     return () => unsubscribe();
   }, [setIsAdmin]);
 
-  if (user === undefined) return <div>Loading...</div>;
+  // Signed-in-only pages: a config notice if Firebase is missing, a redirect to login otherwise.
+  const needsLogin = (element, page) =>
+    firebaseConfigError ? <ConfigNotice page={page} /> : user ? element : <Navigate to="/login" replace />;
+
+  if (user === undefined) return <div style={loadingStyle}>ARYA PATHSHALA</div>;
 
   return (
     <>
       {showHeader && <Header user={user} />}
       <Routes>
-        <Route path="/" element={<HeroSection />} />
-        <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/login" replace />} />
-        <Route path="/dashboardadmin" element={user && isAdmin ? <DashboardAdmin /> : <Navigate to="/login" replace />} />
+        <Route path="/" element={<Home />} />
+        <Route path="/courses" element={<CourseListing />} />
+        <Route path="/courses/:categoryId" element={<CourseListing />} />
+        <Route element={<LearnLayout />}>
+          <Route element={<HubLayout />}>
+            <Route path="/hub" element={<HubHome />} />
+            <Route path="/hub/topic/:topicId" element={<HubTopic />} />
+            <Route path="/hub/:classId" element={<HubCourse />} />
+            <Route path="/hub/:classId/:batchId" element={<HubBatch />} />
+            <Route path="/hub/:classId/:batchId/:subjectId" element={<HubSubject />} />
+          </Route>
+          <Route path="/dashboard" element={needsLogin(<Dashboard />, "The dashboard")} />
+          <Route path="/my-courses" element={needsLogin(<MyCourses />, "My courses")} />
+          <Route path="/progress" element={needsLogin(<Progress />, "Progress")} />
+          <Route path="/study" element={<Study />} />
+          <Route path="/batches" element={<Batches />} />
+          <Route path="/lectures" element={<LecturesHub />} />
+          <Route path="/teachers" element={<TeacherList />} />
+          <Route path="/teachers/:teacherId" element={<TeacherProfile />} />
+          <Route path="/study-material" element={<StudyMaterial />} />
+          <Route path="/practice" element={<Practice />} />
+          <Route path="/practice/:setId" element={<Practice />} />
+          <Route path="/tests" element={<Tests />} />
+          <Route path="/tests/:testId" element={<Tests />} />
+          <Route path="/course/:courseId" element={<CourseDetails />} />
+          <Route path="/course/:courseId/lectures" element={<CourseLectures />} />
+          <Route path="/course/:courseId/lecture/:lectureId" element={<LecturePlayer />} />
+        </Route>
+        {/* Admin content portal: access is decided by the signed admin claim inside AdminLayout. */}
+        <Route path="/admin/content" element={<AdminLayout />}>
+          <Route index element={<AdminOverview />} />
+          <Route path=":section" element={<AdminManager />} />
+        </Route>
+        <Route
+          path="/dashboardadmin"
+          element={
+            firebaseConfigError ? (
+              <ConfigNotice page="The admin dashboard" />
+            ) : user && !adminChecked ? (
+              <div style={loadingStyle}>ARYA PATHSHALA</div>
+            ) : user && isAdmin ? (
+              <DashboardAdmin />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+        <Route
+          path="/tutor"
+          element={
+            firebaseConfigError ? (
+              <ConfigNotice page="The AI Tutor" />
+            ) : user ? (
+              <Suspense fallback={<div style={loadingStyle}>ARYA PATHSHALA</div>}>
+                <Tutor user={user} isAdmin={isAdmin} />
+              </Suspense>
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
         <Route path="/testimonials" element={<Testimonials />} />
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/features" element={<Features />} />
-        <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
-        <Route path="/register" element={user ? <Navigate to="/" replace /> : <Register />} />
+        <Route path="/login" element={user ? <SignedInRedirect adminChecked={adminChecked} isAdmin={isAdmin} /> : <Login />} />
+        <Route path="/register" element={user ? <SignedInRedirect adminChecked={adminChecked} isAdmin={isAdmin} /> : <Register />} />
         <Route path="/facerecog" element={<FaceRecog />} />
         <Route path="/personalattendance" element={<PersonalAttendance />} />
         <Route path="/attendance" element={<Attendance />} />
@@ -79,6 +227,7 @@ function AppContent() {
         <Route path="/assistant" element={<Assistant />} />
         <Route path="/list" element={<List />} />
         <Route path="/footer" element={<Footer />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </>
   );

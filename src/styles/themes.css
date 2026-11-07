@@ -1,0 +1,191 @@
+/*
+  ARYA PATHSHALA themes. One component architecture, four sets of tokens.
+
+  The active theme is the data-ap-theme attribute on <html>. It is set before the first paint by a
+  tiny script in public/index.html (so there is no flash) and then owned by ThemeContext.
+
+    white-glass     clean light theme (the default, same as the tokens in theme.css)
+    midnight-dark   deep navy/black with royal blue accents
+    cosmic-night    midnight navy with purple, electric blue and cyan, the galaxy theme
+    neon-aurora     deep navy with cyan, teal and violet aurora light
+
+  Tokens read by the galaxy canvas: --ap-particle-color, --ap-particle-color-2, --ap-particle-warm
+  (comma separated r, g, b triples), --ap-galaxy-opacity.
+*/
+
+:root {
+  --ap-bg-solid: #f5f7fb;
+  --ap-bg-image: none;
+  --ap-bg-solid-rgb: 245, 247, 251;
+  --ap-particle-color-2: 14, 165, 233;
+  --ap-particle-warm: 244, 163, 0;
+  --ap-galaxy-opacity: 0.4;
+  --ap-orb: none;
+  --ap-overlay-rgb: 245, 247, 251;
+  --ap-tutor-bg-alpha: 1;
+  --ap-code-bg: #eaf0f6;
+  color-scheme: light;
+}
+
+html { background: var(--ap-bg-solid); }
+body { background: var(--ap-bg-image), var(--ap-bg-solid); background-attachment: fixed; }
+/* the canvas and the page content sit above the body background */
+#root { position: relative; z-index: 1; }
+
+/* ------------------------------------------------------------------ shared dark tokens */
+html[data-ap-theme='midnight-dark'],
+html[data-ap-theme='cosmic-night'],
+html[data-ap-theme='neon-aurora'] {
+  color-scheme: dark;
+  --ap-ink: #f3f6ff;
+  --ap-text: #d6def2;
+  --ap-muted: #a2b0cc;
+  --ap-marigold-text: #ffe2a3;
+  --ap-marigold-soft: rgba(244, 163, 0, 0.16);
+  --ap-ok: #5fe0a8;
+  --ap-ok-soft: rgba(37, 211, 140, 0.15);
+  --ap-bad: #ff8d8d;
+  --ap-bad-soft: rgba(255, 99, 99, 0.16);
+  --ap-science: #5fe0b8;
+  --ap-science-soft: rgba(37, 211, 168, 0.16);
+  --ap-english: #ffc566;
+  --ap-english-soft: rgba(255, 176, 32, 0.16);
+  --ap-physics: #b9a6ff;
+  --ap-physics-soft: rgba(139, 105, 255, 0.2);
+  --ap-chemistry: #ff9d73;
+  --ap-chemistry-soft: rgba(255, 120, 60, 0.18);
+  --ap-deep: #070b18;
+  --ap-disabled-bg: rgba(255, 255, 255, 0.06);
+  --ap-disabled-text: #7e8aa6;
+  --ap-glass: blur(10px);
+  --ap-galaxy-opacity: 1;
+  --ap-overlay-rgb: 6, 9, 22;
+  --ap-code-bg: rgba(255, 255, 255, 0.08);
+  --ap-inset: rgba(255, 255, 255, 0.05);
+  --ap-tutor-bg-alpha: 0.6;
+  --ap-shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 8px 24px rgba(0, 0, 0, 0.28);
+  --ap-shadow-lift: 0 2px 4px rgba(0, 0, 0, 0.4), 0 16px 40px rgba(0, 0, 0, 0.4), 0 0 26px var(--ap-glow);
+}
+
+/* functional learning surfaces stay fairly solid; the glass is for decorative panels */
+html[data-ap-theme='midnight-dark'] .ap-brandbg::before,
+html[data-ap-theme='midnight-dark'] .ap-brandbg::after,
+html[data-ap-theme='cosmic-night'] .ap-brandbg::before,
+html[data-ap-theme='cosmic-night'] .ap-brandbg::after,
+html[data-ap-theme='neon-aurora'] .ap-brandbg::before,
+html[data-ap-theme='neon-aurora'] .ap-brandbg::after { display: none; }
+
+/* ------------------------------------------------------------------ Midnight Dark */
+html[data-ap-theme='midnight-dark'] {
+  --ap-bg-solid: #060a14;
+  --ap-bg-solid-rgb: 6, 10, 20;
+  --ap-bg-image: radial-gradient(1100px 600px at 15% -10%, rgba(37, 99, 235, 0.16), transparent 60%),
+                 radial-gradient(900px 500px at 100% 0%, rgba(30, 64, 175, 0.14), transparent 60%);
+  --ap-paper: transparent;
+  --ap-page-bg: transparent;
+  --ap-card: rgba(15, 22, 40, 0.86);
+  --ap-surface: #0f1728;
+  --ap-input-bg: #0b1222;
+  --ap-line: rgba(148, 170, 220, 0.16);
+  --ap-brand: #7fb2ff;
+  --ap-brand-strong: #a9cbff;
+  --ap-brand-soft: rgba(59, 130, 246, 0.16);
+  --ap-btn: #2b63e0;
+  --ap-btn-strong: #1f50c4;
+  --ap-accent: #3b82f6;
+  --ap-accent-secondary: #60a5fa;
+  --ap-sky: #60a5fa;
+  --ap-maths: #8cb8ff;
+  --ap-maths-soft: rgba(59, 130, 246, 0.18);
+  --ap-glow: rgba(59, 130, 246, 0.35);
+  --ap-particle-color: 96, 165, 250;
+  --ap-particle-color-2: 59, 130, 246;
+  --ap-particle-warm: 255, 196, 100;
+  --ap-header-bg: rgba(8, 13, 26, 0.78);
+  --ap-topbar-bg: rgba(8, 13, 26, 0.78);
+  --ap-side-bg: rgba(8, 13, 26, 0.9);
+  --ap-hero-bg: linear-gradient(180deg, rgba(9, 15, 30, 0.45), rgba(9, 15, 30, 0.75));
+  --ap-progress-track: rgba(255, 255, 255, 0.1);
+}
+
+/* ------------------------------------------------------------------ Cosmic Night */
+html[data-ap-theme='cosmic-night'] {
+  --ap-bg-solid: #05071a;
+  --ap-bg-solid-rgb: 5, 7, 26;
+  --ap-bg-image: radial-gradient(1000px 640px at 12% -8%, rgba(124, 58, 237, 0.28), transparent 62%),
+                 radial-gradient(900px 560px at 95% 8%, rgba(37, 99, 235, 0.24), transparent 62%),
+                 radial-gradient(800px 520px at 55% 110%, rgba(6, 182, 212, 0.14), transparent 60%);
+  --ap-paper: transparent;
+  --ap-page-bg: transparent;
+  --ap-card: rgba(18, 18, 48, 0.82);
+  --ap-surface: #12122e;
+  --ap-input-bg: #0d0d26;
+  --ap-line: rgba(167, 139, 250, 0.2);
+  --ap-brand: #b7a4ff;
+  --ap-brand-strong: #d5c9ff;
+  --ap-brand-soft: rgba(139, 92, 246, 0.2);
+  --ap-btn: #6b46e6;
+  --ap-btn-strong: #5a37cf;
+  --ap-accent: #8b5cf6;
+  --ap-accent-secondary: #22d3ee;
+  --ap-sky: #38bdf8;
+  --ap-maths: #9fc2ff;
+  --ap-maths-soft: rgba(79, 140, 255, 0.2);
+  --ap-glow: rgba(139, 92, 246, 0.4);
+  --ap-particle-color: 167, 139, 250;
+  --ap-particle-color-2: 34, 211, 238;
+  --ap-particle-warm: 255, 170, 90;
+  --ap-header-bg: rgba(10, 10, 32, 0.74);
+  --ap-topbar-bg: rgba(10, 10, 32, 0.74);
+  --ap-side-bg: rgba(10, 10, 32, 0.88);
+  --ap-hero-bg: linear-gradient(180deg, rgba(10, 10, 34, 0.35), rgba(10, 10, 34, 0.7));
+  --ap-progress-track: rgba(255, 255, 255, 0.1);
+}
+
+/* ------------------------------------------------------------------ Neon Aurora */
+html[data-ap-theme='neon-aurora'] {
+  --ap-bg-solid: #041019;
+  --ap-bg-solid-rgb: 4, 16, 25;
+  --ap-bg-image: radial-gradient(1000px 600px at 8% -6%, rgba(20, 184, 166, 0.24), transparent 62%),
+                 radial-gradient(900px 560px at 100% 4%, rgba(139, 92, 246, 0.22), transparent 62%),
+                 radial-gradient(800px 500px at 50% 112%, rgba(34, 211, 238, 0.14), transparent 60%);
+  --ap-paper: transparent;
+  --ap-page-bg: transparent;
+  --ap-card: rgba(9, 28, 42, 0.84);
+  --ap-surface: #0b1d2c;
+  --ap-input-bg: #08161f;
+  --ap-line: rgba(94, 234, 212, 0.18);
+  --ap-brand: #6ee7d8;
+  --ap-brand-strong: #a7f3ea;
+  --ap-brand-soft: rgba(45, 212, 191, 0.16);
+  --ap-btn: #0f766e;
+  --ap-btn-strong: #0c615a;
+  --ap-accent: #2dd4bf;
+  --ap-accent-secondary: #a78bfa;
+  --ap-sky: #22d3ee;
+  --ap-maths: #8cc8ff;
+  --ap-maths-soft: rgba(56, 160, 255, 0.18);
+  --ap-glow: rgba(45, 212, 191, 0.32);
+  --ap-particle-color: 94, 234, 212;
+  --ap-particle-color-2: 167, 139, 250;
+  --ap-particle-warm: 255, 210, 120;
+  --ap-header-bg: rgba(5, 18, 28, 0.76);
+  --ap-topbar-bg: rgba(5, 18, 28, 0.76);
+  --ap-side-bg: rgba(5, 18, 28, 0.9);
+  --ap-hero-bg: linear-gradient(180deg, rgba(5, 20, 30, 0.4), rgba(5, 20, 30, 0.72));
+  --ap-progress-track: rgba(255, 255, 255, 0.1);
+}
+
+/* dark themes: remaining light-only details */
+html[data-ap-theme='midnight-dark'] .ap-hero__photo img,
+html[data-ap-theme='cosmic-night'] .ap-hero__photo img,
+html[data-ap-theme='neon-aurora'] .ap-hero__photo img { border-color: rgba(255, 255, 255, 0.14); }
+html[data-ap-theme='midnight-dark'] .ap-side__top,
+html[data-ap-theme='cosmic-night'] .ap-side__top,
+html[data-ap-theme='neon-aurora'] .ap-side__top { background: linear-gradient(180deg, var(--ap-brand-soft), transparent); }
+html[data-ap-theme='midnight-dark'] .ap-logo,
+html[data-ap-theme='cosmic-night'] .ap-logo,
+html[data-ap-theme='neon-aurora'] .ap-logo { box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.18), 0 0 18px var(--ap-glow); }
+html[data-ap-theme='midnight-dark'] .ap-btn--accent,
+html[data-ap-theme='cosmic-night'] .ap-btn--accent,
+html[data-ap-theme='neon-aurora'] .ap-btn--accent { color: #1d1300; }

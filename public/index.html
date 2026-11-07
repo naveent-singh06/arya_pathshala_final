@@ -3,8 +3,8 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
-    <meta name="description" content="Web site created using create-react-app" />
+    <meta name="theme-color" content="#14213d" />
+    <meta name="description" content="ARYA PATHSHALA - an AI-powered learning platform with an AI Tutor, attendance and academic management." />
   
     <!-- Favicon Setup -->
     <link rel="icon" type="image/x-icon" href="favicon.ico" />
@@ -15,9 +15,22 @@
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/favicon-32x32.png" />
   
     <!-- Manifest for PWA -->
-    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" crossorigin="use-credentials" />
   
-    <title>NeuraClass</title>
+    <title>ARYA PATHSHALA</title>
+    <!-- Brand images for CSS (public/assets); declared here because the bundler only resolves relative CSS urls. -->
+    <style>:root{--ap-img-classroom:url(/assets/classroom-bg.svg);--ap-img-logo-wm:url(/assets/arya-pathshala-logo-transparent.png)}</style>
+    <!-- Apply the saved theme before the first paint so there is no flash. Keep in step with src/theme/themes.js. -->
+    <script>
+      (function () {
+        var t = 'white-glass';
+        try {
+          var v = window.localStorage.getItem('ap-theme');
+          if (v === 'white-glass' || v === 'midnight-dark' || v === 'cosmic-night' || v === 'neon-aurora') t = v;
+        } catch (e) {}
+        document.documentElement.setAttribute('data-ap-theme', t);
+      })();
+    </script>
   </head>
   
   <body>

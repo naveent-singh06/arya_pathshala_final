@@ -29,13 +29,7 @@ const Register = () => {
   };
 
   return (
-    <div style={{
-      background: "white",
-      height: "100vh", // Full viewport height
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center",
-    }}>
+    <div className={styles.page}>
     <div className={styles.registerContainer}>
       <h1>Register</h1>
       {error && <p className={styles.error}>{error}</p>}
