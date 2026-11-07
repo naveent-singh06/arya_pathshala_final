@@ -63,6 +63,11 @@ const Dashboard = () => {
               </a>
             </li>
             <li>
+              <a href="/admin/content">
+                <img style={{ marginTop: "-1px" }} src={featureICO} alt="Content Manager" className={styles.icon} /> Content Manager
+              </a>
+            </li>
+            <li>
               <a href="/tutor">
                 <img style={{ marginTop: "-1px" }} src={Classroom} alt="AI Tutor" className={styles.icon} /> AI Tutor
               </a>

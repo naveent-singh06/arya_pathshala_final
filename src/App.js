@@ -2,7 +2,7 @@ import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from "r
 import { Suspense, lazy, useEffect, useState } from "react";
 import { auth, firebaseConfigError } from "./components/Login/firebase";
 import ConfigNotice from "./components/ConfigNotice/ConfigNotice";
-import { onAuthStateChanged } from "firebase/auth";
+import { onAuthStateChanged, getIdTokenResult } from "firebase/auth";
 import Header from "./components/Header/Header";
 import Home from "./pages/Home";
 import CourseListing from "./pages/CourseListing";
@@ -93,7 +93,8 @@ function App() {
 
 function AppContent() {
   const [user, setUser] = useState(undefined);
-  const { isAdmin, setIsAdmin } = useUser(); // Get isAdmin from UserContext
+  const { isAdmin, setIsAdmin } = useUser(); // Verified-claim result, set below
+  const [adminChecked, setAdminChecked] = useState(false);
   const location = useLocation();
   const showHeader = !isOwnLayoutPath(location.pathname);
 
@@ -104,16 +105,30 @@ function AppContent() {
       setIsAdmin(false);
       return undefined;
     }
+    let latest = 0;
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      console.log("User state changed:", currentUser);
       setUser(currentUser || null);
-
-      // Check if user is admin (Hardcoded Email)
-      if (currentUser?.email === "suryanshhimalayan@gmail.com") {
-        setIsAdmin(true);
-      } else {
+      const ticket = ++latest;
+      if (!currentUser) {
         setIsAdmin(false);
+        setAdminChecked(true);
+        return;
       }
+      // Admin is decided only by the signed `admin` custom claim in the Firebase ID token
+      // (set by scripts/set-admin-claim.js). It is never derived from an email address or a
+      // form choice. The token refreshes by itself about hourly; signing in again picks up a new claim.
+      setAdminChecked(false);
+      getIdTokenResult(currentUser)
+        .then((r) => {
+          if (ticket !== latest) return;
+          setIsAdmin(r.claims.admin === true);
+          setAdminChecked(true);
+        })
+        .catch(() => {
+          if (ticket !== latest) return;
+          setIsAdmin(false);
+          setAdminChecked(true);
+        });
     });
 
     return () => unsubscribe();
@@ -167,6 +182,8 @@ function AppContent() {
           element={
             firebaseConfigError ? (
               <ConfigNotice page="The admin dashboard" />
+            ) : user && !adminChecked ? (
+              <div style={loadingStyle}>ARYA PATHSHALA</div>
             ) : user && isAdmin ? (
               <DashboardAdmin />
             ) : (

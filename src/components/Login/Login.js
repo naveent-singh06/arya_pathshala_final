@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth, firebaseConfigError } from "./firebase";
-import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "firebase/auth";
+import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, getIdTokenResult } from "firebase/auth";
 import { useUser } from "../../UserContext"; // Import global context
 import styles from "./Login.module.css";
 
@@ -24,9 +24,16 @@ const Login = () => {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
   
-      const isAdminUser = user.email === "suryanshhimalayan@gmail.com"; 
-      setIsAdmin(isAdminUser); 
-  
+      // Admin status comes from the signed `admin` claim (App.js listens for it), never from an email address.
+      // Force one token refresh right after sign-in so a freshly granted claim is picked up.
+      let admin = false;
+      try {
+        admin = (await getIdTokenResult(user, true)).claims.admin === true;
+      } catch (e) {
+        admin = false;
+      }
+      setIsAdmin(admin);
+
       setUser(user);
       navigate("/");
     } catch (error) {
@@ -50,9 +57,7 @@ const Login = () => {
     } else {
       setError("");
       
-      // Set global admin/student status
-      setIsAdmin(role === "admin");
-
+      // This form does not sign anyone in, so it must never grant admin: admin comes only from the verified claim.
       alert("Login successful!");
       navigate("/");
     }
