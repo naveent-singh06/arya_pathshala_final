@@ -22,6 +22,13 @@ import CourseDetails from "./pages/CourseDetails";
 import CourseLectures from "./pages/CourseLectures";
 import LecturePlayer from "./pages/LecturePlayer";
 import NotFound from "./pages/NotFound";
+import HubLayout from "./pages/hub/HubLayout";
+import HubHome from "./pages/hub/HubHome";
+import HubClass from "./pages/hub/HubClass";
+import HubTopic from "./pages/hub/HubTopic";
+import AdminLayout from "./admin/AdminLayout";
+import AdminOverview from "./admin/Overview";
+import AdminManager from "./admin/Manager";
 import { ThemeProvider } from "./theme/ThemeContext";
 import ThemePicker from "./theme/ThemePicker";
 import GalaxyBackground from "./components/Galaxy/GalaxyBackground";
@@ -60,7 +67,7 @@ const loadingStyle = {
 // Pages that draw their own navigation (the learning sidebar, the AI Tutor, the admin dashboard).
 const LEARN_PREFIXES = [
   "/dashboard", "/my-courses", "/batches", "/lectures", "/teachers", "/study", "/study-material",
-  "/practice", "/tests", "/progress", "/course/",
+  "/practice", "/tests", "/progress", "/course/", "/hub", "/admin",
 ];
 function isOwnLayoutPath(pathname) {
   if (pathname === "/dashboardadmin" || pathname === "/tutor") return true;
@@ -124,6 +131,11 @@ function AppContent() {
         <Route path="/courses" element={<CourseListing />} />
         <Route path="/courses/:categoryId" element={<CourseListing />} />
         <Route element={<LearnLayout />}>
+          <Route element={<HubLayout />}>
+            <Route path="/hub" element={<HubHome />} />
+            <Route path="/hub/topic/:topicId" element={<HubTopic />} />
+            <Route path="/hub/:classId" element={<HubClass />} />
+          </Route>
           <Route path="/dashboard" element={needsLogin(<Dashboard />, "The dashboard")} />
           <Route path="/my-courses" element={needsLogin(<MyCourses />, "My courses")} />
           <Route path="/progress" element={needsLogin(<Progress />, "Progress")} />
@@ -140,6 +152,11 @@ function AppContent() {
           <Route path="/course/:courseId" element={<CourseDetails />} />
           <Route path="/course/:courseId/lectures" element={<CourseLectures />} />
           <Route path="/course/:courseId/lecture/:lectureId" element={<LecturePlayer />} />
+        </Route>
+        {/* Admin content portal: access is decided by the signed admin claim inside AdminLayout. */}
+        <Route path="/admin/content" element={<AdminLayout />}>
+          <Route index element={<AdminOverview />} />
+          <Route path=":section" element={<AdminManager />} />
         </Route>
         <Route
           path="/dashboardadmin"

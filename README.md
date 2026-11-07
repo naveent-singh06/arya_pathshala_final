@@ -23,3 +23,6 @@ npm run build      # production build
 npm run test:api   # server API tests
 CI=true npm test   # React tests
 ```
+
+## Study Hub & Admin content portal
+See [docs/CMS_SETUP.md](docs/CMS_SETUP.md) for admin setup, adding lectures/PDFs/questions and Firestore rules.

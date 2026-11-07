@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import {
   BookOpen, LayoutDashboard, GraduationCap, Layers, PlayCircle, Users, FileText, ClipboardList,
-  ListChecks, BarChart3, Sparkles, ChevronsLeft, ChevronsRight, Menu, X, Home, LogIn,
+  ListChecks, BarChart3, Library, Sparkles, ChevronsLeft, ChevronsRight, Menu, X, Home, LogIn,
 } from 'lucide-react';
 import useAuthUser from '../Login/useAuthUser';
 import { useLearnerState } from '../../data/learnerState';
@@ -10,6 +10,7 @@ import { LearnContext } from './LearnContext';
 import { BrandMark } from '../Header/Header';
 
 const ITEMS = [
+  { to: '/hub', label: 'Study Hub', icon: Library, match: ['/hub'] },
   { to: '/study', label: 'Study', icon: BookOpen, match: ['/study', '/course'] },
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, match: ['/dashboard'] },
   { to: '/my-courses', label: 'My Courses', icon: GraduationCap, match: ['/my-courses'] },

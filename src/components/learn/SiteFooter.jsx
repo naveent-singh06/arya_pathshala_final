@@ -2,6 +2,8 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { CATEGORIES } from '../../data/categories';
 import { BrandMark } from '../Header/Header';
+import SocialLinks from '../../cms/SocialLinks';
+import '../../styles/hub.css';
 
 export default function SiteFooter() {
   return (
@@ -13,6 +15,7 @@ export default function SiteFooter() {
             <span>Arya Pathshala</span>
           </Link>
           <p>Your Dreams, Our Guidance.</p>
+          <SocialLinks />
         </div>
         <div>
           <h4>Courses</h4>
@@ -26,6 +29,7 @@ export default function SiteFooter() {
           <h4>Learn</h4>
           <ul>
             <li><Link to="/teachers">Teachers</Link></li>
+            <li><Link to="/hub">Study Hub</Link></li>
             <li><Link to="/study-material">Study material</Link></li>
             <li><Link to="/practice">DPP and practice</Link></li>
             <li><Link to="/tutor">AI Tutor</Link></li>
