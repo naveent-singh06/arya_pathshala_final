@@ -30,8 +30,12 @@ function Preview({ kind, form }) {
   }
   if (kind === 'resources') {
     const d = parseDrive(form.driveUrl);
-    if (!form.driveUrl) return <p className="ap-muted">Paste a Google Drive link to check it here.</p>;
-    if (!d.ok) return <Notice kind="error">{d.error}</Notice>;
+    if (!form.driveUrl) return <p className="ap-muted">Paste a link to check it here.</p>;
+    if (!d.ok) {
+      const built = MANAGERS.resources.build({ ...form, classId: 'x', subjectId: 'x', chapterId: 'x', topicId: 'x', title: 'x' });
+      if (built.errors.driveUrl) return <Notice kind="error">{built.errors.driveUrl}</Notice>;
+      return <p className="ap-muted">Link accepted. Students will open it in a new tab: <code>{built.data.externalUrl || built.data.route}</code></p>;
+    }
     return (
       <div className="ap-stack" style={{ gap: 8 }}>
         <div className="adm-pdf"><iframe title="PDF preview" src={d.previewUrl} /></div>
@@ -147,8 +151,13 @@ function ManagerInner({ name, cfg }) {
     }
     const payload = cfg.noStatus ? { ...doc, active: form.active !== false } : { ...doc, status };
     const isNew = editing === 'new';
+    const batchId = name === 'subjects' ? form.addToBatch : '';
     const ok = await run(
-      () => (isNew ? createItem(name, payload, user) : updateItem(name, editing.id, payload)),
+      async () => {
+        const id = isNew ? await createItem(name, payload, user) : (await updateItem(name, editing.id, payload), editing.id);
+        const batch = batchId && (data.batches || []).find((b) => b.id === batchId);
+        if (batch && !(batch.subjectIds || []).includes(id)) await updateItem('batches', batch.id, { subjectIds: [...(batch.subjectIds || []), id] });
+      },
       cfg.noStatus ? 'Saved.' : status === 'published' ? 'Published. Students can see it now.' : 'Saved as draft. Students cannot see it yet.',
     );
     if (ok) close();
@@ -232,6 +241,18 @@ function ManagerInner({ name, cfg }) {
               {cfg.fields.map((f) => {
                 const id = `f-${f.key}`;
                 const common = { id, className: 'ap-input', value: form[f.key] == null ? '' : form[f.key], onChange: (e) => setField(f.key, e.target.value), 'aria-invalid': !!errors[f.key], 'aria-describedby': errors[f.key] ? `${id}-err` : f.help ? `${id}-help` : undefined };
+                if (f.type === 'batchpick') {
+                  const pool = (data.batches || []).filter((b) => b.classId === form.classId).sort(byOrder);
+                  return (
+                    <Field key={f.key} id={id} label={f.label} help={f.help}>
+                      <select {...common}>
+                        <option value="">Do not add to a batch yet</option>
+                        {pool.map((b) => <option key={b.id} value={b.id}>{b.name}{b.status && b.status !== 'published' ? ` (${b.status})` : ''}</option>)}
+                      </select>
+                      {!pool.length && <small className="ap-muted">No batch exists for this course yet. Create one under Batches first.</small>}
+                    </Field>
+                  );
+                }
                 if (f.type === 'multi') {
                   const pool = (data[f.from] || []).filter((x) => f.from !== 'subjects' || x.classId === form.classId).sort(byOrder);
                   const chosen = form[f.key] || [];
@@ -328,7 +349,7 @@ function ManagerInner({ name, cfg }) {
                     <button type="button" className="ap-iconbtn" aria-label={`Move ${itemTitle(item, cfg.titleKey)} down`} title="Move down" disabled={busy} onClick={() => move(item, 'down')}><ArrowDown size={16} /></button>
                   </>}
                   {name === 'lectures' && item.youtubeVideoId && <a className="ap-iconbtn" href={`https://www.youtube.com/watch?v=${item.youtubeVideoId}`} target="_blank" rel="noopener noreferrer" aria-label="Open on YouTube" title="Open on YouTube"><ExternalLink size={16} /></a>}
-                  {(name === 'resources' || name === 'dpps') && (item.driveUrl || item.externalUrl) && <a className="ap-iconbtn" href={item.driveUrl || item.externalUrl} target="_blank" rel="noopener noreferrer" aria-label="Open in Google Drive" title="Open in Google Drive"><ExternalLink size={16} /></a>}
+                  {(name === 'resources' || name === 'dpps') && (item.driveUrl || item.externalUrl) && <a className="ap-iconbtn" href={item.driveUrl || item.externalUrl} target="_blank" rel="noopener noreferrer" aria-label="Open link" title="Open link"><ExternalLink size={16} /></a>}
                   <button type="button" className="ap-iconbtn" aria-label={`${(cfg.noStatus ? item.active !== false : item.status === 'published') ? 'Unpublish' : 'Publish'} ${itemTitle(item, cfg.titleKey)}`} title={(cfg.noStatus ? item.active !== false : item.status === 'published') ? 'Unpublish' : 'Publish'} disabled={busy} onClick={() => toggle(item)}>
                     {(cfg.noStatus ? item.active !== false : item.status === 'published') ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>

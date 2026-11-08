@@ -35,6 +35,9 @@ const HubTopic = require('../../pages/hub/HubTopic').default;
 const HubSubject = require('../../pages/hub/HubSubject').default;
 const HubBatch = require('../../pages/hub/HubBatch').default;
 const HubCourse = require('../../pages/hub/HubCourse').default;
+const HubHome = require('../../pages/hub/HubHome').default;
+const MyCourses = require('../../pages/MyCourses').default;
+const Batches = require('../../pages/Batches').default;
 
 const data = {
   subjects: [{ id: 's1', classId: 'class-10', name: 'Mathematics', status: 'published', order: 1 }],
@@ -131,15 +134,86 @@ describe('lecture manager', () => {
     fireEvent.click(screen.getByRole('button', { name: /unpublish lecture one/i }));
     await waitFor(() => expect(store.updateItem).toHaveBeenCalledWith('lectures', 'l1', { status: 'unpublished' }));
   });
-  test('notes form warns about Drive sharing and rejects non-Drive links', async () => {
+  test('resource form warns about Drive sharing and rejects bad links', async () => {
     renderManager('resources');
-    fireEvent.click(screen.getByRole('button', { name: /add note/i }));
+    fireEvent.click(screen.getByRole('button', { name: /add resource/i }));
     expect(screen.getByText(/sharing permission allows students/i)).toBeTruthy();
     fireEvent.change(screen.getByLabelText(/title/i, { selector: '#f-title' }), { target: { value: 'N' } });
-    fireEvent.change(screen.getByLabelText(/google drive link/i), { target: { value: 'https://example.com/x.pdf' } });
+    fireEvent.change(screen.getByLabelText(/^link/i), { target: { value: 'not a link' } });
     fireEvent.click(screen.getByRole('button', { name: 'Publish' }));
-    expect((await screen.findAllByText(/only google drive links/i)).length).toBeGreaterThan(0);
+    expect((await screen.findAllByText(/full https/i)).length).toBeGreaterThan(0);
     expect(store.createItem).not.toHaveBeenCalled();
+  });
+});
+
+describe('admin subject and resource workflow', () => {
+  test('a new subject can be added to a batch in one step', async () => {
+    store.createItem.mockResolvedValue('new1');
+    renderManager('subjects');
+    fireEvent.click(screen.getByRole('button', { name: /add subject/i }));
+    fireEvent.change(document.getElementById('f-classId'), { target: { value: 'class-10' } });
+    fireEvent.change(screen.getByLabelText(/subject name/i), { target: { value: 'Science' } });
+    fireEvent.change(screen.getByLabelText(/add to batch/i), { target: { value: 'b1' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Publish' }));
+    await waitFor(() => expect(store.createItem).toHaveBeenCalledWith('subjects', expect.objectContaining({ name: 'Science', status: 'published' }), expect.anything()));
+    await waitFor(() => expect(store.updateItem).toHaveBeenCalledWith('batches', 'b1', { subjectIds: ['s1', 'new1'] }));
+  });
+});
+
+describe('student entry points', () => {
+  const empty = { courses: [], batches: [], teachers: [], dpps: [], subjects: [], chapters: [], topics: [], lectures: [], resources: [], questions: [] };
+  const wrap = (el, value, url = '/') => (
+    <HubContext.Provider value={{ user: { uid: 'u1' }, progress: {}, progressActions: null, enrolled: [], isAdmin: false, ...value }}>
+      <MemoryRouter initialEntries={[url]}><Routes><Route path="*" element={el} /></Routes></MemoryRouter>
+    </HubContext.Provider>
+  );
+  test('with nothing published, Class 9, Class 10 and NEET are still offered', () => {
+    render(wrap(<HubHome />, { data: empty }));
+    ['Class 9', 'Class 10', 'NEET'].forEach((t) => expect(screen.getByRole('heading', { name: t })).toBeTruthy());
+    expect(screen.getByText(/appear in each course as soon as your teachers publish/i)).toBeTruthy();
+    expect(screen.queryByText(/Courses have not been published yet/)).toBeNull();
+  });
+  test('empty course page for a student has no admin link', () => {
+    render(<HubContext.Provider value={{ data: empty, user: { uid: 'u1' }, progress: {}, enrolled: [], isAdmin: false }}><MemoryRouter initialEntries={['/hub/class-9']}><Routes><Route path="/hub/:classId" element={<HubCourse />} /></Routes></MemoryRouter></HubContext.Provider>);
+    expect(screen.getByText(/content is coming soon/i)).toBeTruthy();
+    expect(screen.queryByRole('link', { name: /create a batch/i })).toBeNull();
+  });
+  test('empty course page for an admin links to the content portal', () => {
+    render(<HubContext.Provider value={{ data: empty, user: { uid: 'a' }, progress: {}, enrolled: [], isAdmin: true }}><MemoryRouter initialEntries={['/hub/class-9']}><Routes><Route path="/hub/:classId" element={<HubCourse />} /></Routes></MemoryRouter></HubContext.Provider>);
+    expect(screen.getByRole('link', { name: /create a batch/i }).getAttribute('href')).toBe('/admin/content/batches');
+  });
+  test('My courses shows an enrolled batch with real progress', () => {
+    render(wrap(<MyCourses />, { data, enrolled: ['b1'], progress: { t1: { completed: true } } }));
+    expect(screen.getByText('Board Batch')).toBeTruthy();
+    expect(screen.getByText(/1 of 1 topics completed/)).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Open batch' }).getAttribute('href')).toBe('/hub/class-10/b1');
+    expect(screen.getByRole('link', { name: 'Mathematics' }).getAttribute('href')).toContain('/hub/class-10/b1/s1');
+  });
+  test('My courses without a batch invites the student to join one', () => {
+    render(wrap(<MyCourses />, { data }));
+    expect(screen.getByText(/have not joined a batch yet/i)).toBeTruthy();
+  });
+  test('Batches lists published batches and an empty state for the other courses', () => {
+    render(wrap(<Batches />, { data, enroll: jest.fn(() => Promise.resolve()) }));
+    expect(screen.getByText('Board Batch')).toBeTruthy();
+    expect(screen.getAllByText(/Batches coming soon/i).length).toBe(2);
+    expect(screen.getByRole('button', { name: 'Enroll' })).toBeTruthy();
+  });
+  test('quiz and revision resources open correctly', () => {
+    const d2 = { ...data, resources: [
+      { id: 'q', topicId: 't1', title: 'Chapter Quiz', type: 'Quiz', route: '/tests/ch1', status: 'published', order: 1 },
+      { id: 'r', topicId: 't1', title: 'Revision Sheet', type: 'Revision Material', externalUrl: 'https://example.com/rev.pdf', status: 'published', order: 2 },
+    ] };
+    render(
+      <HubContext.Provider value={{ data: d2, user: { uid: 'u1' }, progress: {}, enrolled: [], isAdmin: false }}>
+        <MemoryRouter initialEntries={['/hub/topic/t1']}><Routes><Route path="/hub/topic/:topicId" element={<HubTopic />} /></Routes></MemoryRouter>
+      </HubContext.Provider>,
+    );
+    fireEvent.click(screen.getByRole('tab', { name: /notes, revision/i }));
+    expect(screen.getByRole('link', { name: /take the quiz/i }).getAttribute('href')).toBe('/tests/ch1');
+    const rev = screen.getByRole('link', { name: /open link/i });
+    expect(rev.getAttribute('href')).toBe('https://example.com/rev.pdf');
+    expect(rev.getAttribute('rel')).toContain('noopener');
   });
 });
 
@@ -189,7 +263,7 @@ describe('student Study Hub', () => {
     );
     expect(screen.getByTitle('Lecture One').getAttribute('src')).toContain('youtube-nocookie.com/embed/dQw4w9WgXcQ');
     expect(screen.getByText(/Taught by Ms A/)).toBeTruthy();
-    fireEvent.click(screen.getByRole('tab', { name: /handwritten notes/i }));
+    fireEvent.click(screen.getByRole('tab', { name: /notes, revision/i }));
     const open = screen.getByRole('link', { name: /open in google drive/i });
     expect(open.getAttribute('target')).toBe('_blank');
     expect(open.getAttribute('rel')).toContain('noopener');

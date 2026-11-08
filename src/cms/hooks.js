@@ -73,3 +73,17 @@ export function useSocialLinks() {
 export const clearSocialCache = () => {
   socialCache = null;
 };
+
+/** Cheap admin check for showing shortcuts (uses the cached token; the portal and Firestore rules enforce the real check). */
+export function useIsAdmin() {
+  const user = useAuthUser();
+  const [admin, setAdmin] = useState(false);
+  useEffect(() => {
+    setAdmin(false);
+    if (!user) return undefined;
+    let live = true;
+    withTimeout(getIdTokenResult(user), 15000).then((r) => live && setAdmin(r.claims.admin === true)).catch(() => {});
+    return () => { live = false; };
+  }, [user]);
+  return admin;
+}

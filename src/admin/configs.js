@@ -42,6 +42,7 @@ export const MANAGERS = {
       { key: 'name', label: 'Subject name', type: 'text', required: true },
       { key: 'description', label: 'Description', type: 'textarea' },
       { key: 'imageUrl', label: 'Image link (optional)', type: 'text', help: 'A https:// picture link. Leave empty to use an icon.' },
+      { key: 'addToBatch', label: 'Add to batch', type: 'batchpick', help: 'Students only see a subject through a batch. Pick the batch now, or tick the subject later under Batches.' },
       { key: 'order', label: 'Display order', type: 'number', help: 'Lower numbers show first.' },
     ],
     build(form) {
@@ -106,26 +107,39 @@ export const MANAGERS = {
     },
   },
   resources: {
-    title: 'Notes & PDFs', singular: 'note', levels: 4, parent: 'topicId', titleKey: 'title', drive: true,
+    title: 'Notes & PDFs', singular: 'resource', levels: 4, parent: 'topicId', titleKey: 'title', drive: true,
+    help: 'Add notes, revision material or a quiz. Paste a Google Drive link, any https:// link (a PDF or a page), or for a quiz an in-app route such as /tests. You can add as many as you need to one topic.',
     fields: [
       { key: 'title', label: 'Title', type: 'text', required: true },
       { key: 'type', label: 'Resource type', type: 'select', options: RESOURCE_TYPES },
-      { key: 'driveUrl', label: 'Google Drive link', type: 'text', required: true },
+      { key: 'driveUrl', label: 'Link (Google Drive, https:// PDF/page, or /tests route for a quiz)', type: 'text', required: true },
       { key: 'description', label: 'Description', type: 'textarea' },
       { key: 'order', label: 'Display order', type: 'number' },
     ],
     build(form) {
       const errors = {};
       base(form, errors, { levels: 4, titleKey: 'title', titleLabel: 'Title' });
-      const d = parseDrive(form.driveUrl);
-      if (!d.ok) errors.driveUrl = d.error;
-      return {
-        errors,
-        data: {
-          ...scopeIds(form, 4), title: text(form.title), type: RESOURCE_TYPES.includes(form.type) ? form.type : 'Chapter Notes',
-          driveUrl: d.ok ? d.viewUrl : '', driveId: d.ok ? d.id : '', description: text(form.description), order: num(form.order) || 0,
-        },
-      };
+      const raw = text(form.driveUrl);
+      const type = RESOURCE_TYPES.includes(form.type) ? form.type : 'Chapter Notes';
+      let link = { driveUrl: '', driveId: '', externalUrl: '', route: '' };
+      if (!raw) errors.driveUrl = 'Paste a link.';
+      else if (raw.startsWith('/')) {
+        if (type === 'Quiz' && /^\/tests(\/[A-Za-z0-9_-]+)?$/.test(raw)) link.route = raw;
+        else errors.driveUrl = type === 'Quiz' ? 'Use /tests or /tests/<quiz id>, or a full https:// link.' : 'In-app routes are only for the Quiz type. Use a full https:// link.';
+      } else {
+        const d = parseDrive(raw);
+        if (d.ok) link = { ...link, driveUrl: d.viewUrl, driveId: d.id };
+        else if (/drive\.google\.com|docs\.google\.com/i.test(raw)) errors.driveUrl = d.error;
+        else {
+          const ext = httpsOrEmpty(raw);
+          if (ext.ok && ext.value) link.externalUrl = ext.value;
+          else errors.driveUrl = 'Use a full https:// link, for example https://example.com/notes.pdf.';
+        }
+      }
+      return { errors, data: { ...scopeIds(form, 4), title: text(form.title), type, ...link, description: text(form.description), order: num(form.order) || 0 } };
+    },
+    toForm(item) {
+      return { ...item, driveUrl: item.driveUrl || item.externalUrl || item.route || '', order: String(item.order || 0) };
     },
   },
   questions: {

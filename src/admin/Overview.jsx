@@ -32,7 +32,7 @@ export default function Overview() {
         <ol className="adm-steps">
           <li>Add the <Link to="/admin/content/batches">batch</Link>, <Link to="/admin/content/subjects">subject</Link>, <Link to="/admin/content/chapters">chapter</Link> and <Link to="/admin/content/topics">topic</Link> (once).</li>
           <li>Open <Link to="/admin/content/lectures">Manage Lectures</Link>, pick the topic, paste the YouTube link and check the preview.</li>
-          <li>Add the handwritten notes in <Link to="/admin/content/resources">Notes &amp; PDFs</Link> with a Google Drive link.</li>
+          <li>Add notes, revision material or a quiz in <Link to="/admin/content/resources">Notes &amp; PDFs</Link> with a Drive or https link, and DPPs in <Link to="/admin/content/dpps">DPP</Link>.</li>
           <li>Choose <strong>Publish</strong>. Students see it on the topic page immediately.</li>
         </ol>
       </section>

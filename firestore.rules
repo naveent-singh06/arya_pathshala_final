@@ -123,8 +123,13 @@ service cloud.firestore {
         && optText(d, 'teacherName', 120) && optText(d, 'description', 4000) && optText(d, 'duration', 30);
     }
     function validResource(d) {
+      // A resource carries at least one link: a Google Drive file, any https link (PDF, page), or an
+      // in-app quiz route such as /tests or /tests/<id>.
       return okStatus(d) && okOrder(d) && okClass(d) && okText(d, 'title', 200) && okText(d, 'topicId', 100)
-        && d.driveUrl is string && d.driveUrl.matches('^https://(drive|docs)\\.google\\.com/.*') && d.driveUrl.size() <= 600
+        && (!('driveUrl' in d) || d.driveUrl == '' || (d.driveUrl is string && d.driveUrl.matches('^https://(drive|docs)\\.google\\.com/.*') && d.driveUrl.size() <= 600))
+        && optUrl(d, 'externalUrl')
+        && (!('route' in d) || d.route == '' || (d.route is string && d.route.matches('^/tests(/[A-Za-z0-9_-]+)?$')))
+        && ((('driveUrl' in d) && d.driveUrl != '') || (('externalUrl' in d) && d.externalUrl != '') || (('route' in d) && d.route != ''))
         && optText(d, 'description', 2000);
     }
     function validQuestion(d) {

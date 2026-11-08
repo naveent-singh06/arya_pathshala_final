@@ -156,6 +156,8 @@ function AppContent() {
         <Route path="/courses/:categoryId" element={<CourseListing />} />
         <Route element={<LearnLayout />}>
           <Route element={<HubLayout />}>
+            <Route path="/my-courses" element={needsLogin(<MyCourses />, "My courses")} />
+            <Route path="/batches" element={<Batches />} />
             <Route path="/hub" element={<HubHome />} />
             <Route path="/hub/topic/:topicId" element={<HubTopic />} />
             <Route path="/hub/:classId" element={<HubCourse />} />
@@ -163,10 +165,8 @@ function AppContent() {
             <Route path="/hub/:classId/:batchId/:subjectId" element={<HubSubject />} />
           </Route>
           <Route path="/dashboard" element={needsLogin(<Dashboard />, "The dashboard")} />
-          <Route path="/my-courses" element={needsLogin(<MyCourses />, "My courses")} />
           <Route path="/progress" element={needsLogin(<Progress />, "Progress")} />
           <Route path="/study" element={<Study />} />
-          <Route path="/batches" element={<Batches />} />
           <Route path="/lectures" element={<LecturesHub />} />
           <Route path="/teachers" element={<TeacherList />} />
           <Route path="/teachers/:teacherId" element={<TeacherProfile />} />

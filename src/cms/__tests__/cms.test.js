@@ -1,7 +1,7 @@
 import { parseYouTube } from '../youtube';
 import { parseDrive } from '../drive';
 import { normalizeLink, visibleLinks } from '../links';
-import { buildTree, visibleData, chapterProgress, reorderPairs, nextOrder, flatTopics } from '../model';
+import { buildTree, visibleData, chapterProgress, reorderPairs, nextOrder, flatTopics, resourceLink } from '../model';
 import { MANAGERS } from '../../admin/configs';
 
 describe('parseYouTube', () => {
@@ -125,7 +125,25 @@ describe('admin form validation', () => {
     const r = MANAGERS.resources.build({ ...scope, title: 'N', type: 'Formula Sheets', driveUrl: 'https://drive.google.com/file/d/1AbCdEfGhIjK/view?usp=sharing' });
     expect(r.errors).toEqual({});
     expect(r.data.driveUrl).toBe('https://drive.google.com/file/d/1AbCdEfGhIjK/view');
-    expect(MANAGERS.resources.build({ ...scope, title: 'N', driveUrl: 'https://evil.com/x' }).errors.driveUrl).toBeTruthy();
+    expect(MANAGERS.resources.build({ ...scope, title: 'N', driveUrl: 'http://example.com/x' }).errors.driveUrl).toBeTruthy();
+    expect(MANAGERS.resources.build({ ...scope, title: 'N', driveUrl: 'https://drive.google.com/drive/folders/abc' }).errors.driveUrl).toBeTruthy();
+  });
+  test('resource accepts an https PDF link, a revision link and a quiz route', () => {
+    const pdf = MANAGERS.resources.build({ ...scope, title: 'N', type: 'Revision Material', driveUrl: 'https://example.com/rev.pdf' });
+    expect(pdf.errors).toEqual({});
+    expect(pdf.data).toMatchObject({ externalUrl: 'https://example.com/rev.pdf', driveUrl: '', route: '', type: 'Revision Material' });
+    const quiz = MANAGERS.resources.build({ ...scope, title: 'Q', type: 'Quiz', driveUrl: '/tests/ch1-quiz' });
+    expect(quiz.errors).toEqual({});
+    expect(quiz.data.route).toBe('/tests/ch1-quiz');
+    expect(MANAGERS.resources.build({ ...scope, title: 'Q', type: 'Chapter Notes', driveUrl: '/tests' }).errors.driveUrl).toBeTruthy();
+    expect(MANAGERS.resources.build({ ...scope, title: 'Q', type: 'Quiz', driveUrl: '/admin/content' }).errors.driveUrl).toBeTruthy();
+  });
+  test('resourceLink picks the link a student can open and ignores junk', () => {
+    expect(resourceLink({ driveUrl: 'https://drive.google.com/file/d/x/view' })).toEqual({ href: 'https://drive.google.com/file/d/x/view', internal: false });
+    expect(resourceLink({ externalUrl: 'https://e.com/a.pdf' }).internal).toBe(false);
+    expect(resourceLink({ route: '/tests/abc' })).toEqual({ href: '/tests/abc', internal: true });
+    expect(resourceLink({ route: '/admin' })).toBeNull();
+    expect(resourceLink({})).toBeNull();
   });
   test('question needs four distinct options', () => {
     const q = { ...scope, question: 'Q?', o0: 'a', o1: 'b', o2: 'c', o3: 'd', correctIndex: '2' };

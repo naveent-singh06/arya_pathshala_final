@@ -5,7 +5,7 @@ export const CLASSES = CATEGORIES.map((c) => ({ id: c.id, title: c.title }));
 export const DIFFICULTIES = ['Easy', 'Medium', 'Hard'];
 // Older content used Basic / Intermediate / Advanced; show those as Easy / Medium / Hard.
 export const difficultyLabel = (d) => ({ Basic: 'Easy', Intermediate: 'Medium', Advanced: 'Hard' }[d] || d || 'Easy');
-export const RESOURCE_TYPES = ['Chapter Notes', 'NCERT Solutions', 'Revision Notes', 'Formula Sheets', 'Important Questions', 'Sample Papers', 'DPP / Practice PDF', 'Other'];
+export const RESOURCE_TYPES = ['Chapter Notes', 'NCERT Solutions', 'Revision Material', 'Revision Notes', 'Formula Sheets', 'Important Questions', 'Sample Papers', 'DPP / Practice PDF', 'Quiz', 'Other'];
 export const STATUSES = ['draft', 'published', 'unpublished'];
 export const COLLECTIONS = ['courses', 'batches', 'teachers', 'subjects', 'chapters', 'topics', 'lectures', 'resources', 'dpps', 'questions'];
 
@@ -118,3 +118,12 @@ export const splitQuestions = (questions) => ({
   practice: (questions || []).filter((q) => q.set !== 'dpp'),
   dpp: (questions || []).filter((q) => q.set === 'dpp'),
 });
+
+/** The link a student opens for a resource: { href, internal }. Resources hold a Drive file, an https link or a quiz route. */
+export function resourceLink(r) {
+  if (!r) return null;
+  if (r.driveUrl) return { href: r.driveUrl, internal: false };
+  if (r.externalUrl) return { href: r.externalUrl, internal: false };
+  if (r.route && /^\/tests(\/[A-Za-z0-9_-]+)?$/.test(r.route)) return { href: r.route, internal: true };
+  return null;
+}

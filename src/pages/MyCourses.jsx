@@ -1,23 +1,16 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { getCourse } from '../data/courses';
-import { useLearn } from '../components/learn/LearnContext';
-import { CourseCard, EmptyState, PageHead, DemoNote } from '../components/learn/shared';
+import { PageHead } from '../components/learn/shared';
+import { useHub } from './hub/HubContext';
+import { MyBatches } from './hub/MyLearning';
+import '../styles/hub.css';
 
+/** My courses: the batches the student joined (real Firestore data, real progress) and the Study Hub entry points. */
 export default function MyCourses() {
-  const { state } = useLearn();
-  const courses = state.enrolled.map(getCourse).filter(Boolean);
+  const hub = useHub();
   return (
-    <>
-      <PageHead title="My courses" description="Courses you have enrolled in." />
-      <DemoNote>Enrollment is saved in this browser only. Real enrollment needs a backend and is not connected yet.</DemoNote>
-      {courses.length ? (
-        <div className="ap-grid-3">{courses.map((c) => <CourseCard key={c.id} course={c} />)}</div>
-      ) : (
-        <EmptyState title="You have not enrolled yet" action={<Link className="ap-btn ap-btn--primary" to="/courses">Browse courses</Link>}>
-          Open any course and choose Enroll for free.
-        </EmptyState>
-      )}
-    </>
+    <div className="ap-stack" style={{ gap: 16 }}>
+      <PageHead title="My courses" description="Your batches, your progress and the next topic to study." />
+      <MyBatches hub={hub} />
+    </div>
   );
 }

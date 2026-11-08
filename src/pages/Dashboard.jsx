@@ -7,6 +7,7 @@ import { TEACHERS, getTeacher } from '../data/teachers';
 import { TESTS } from '../data/practice';
 import { featuredCourse } from '../data/continueLearning';
 import { courseProgress } from '../data/learnerState';
+import DashboardLearning from './hub/DashboardLearning';
 import ContinueCard from '../components/learn/ContinueCard';
 import RecentActivity from '../components/learn/RecentActivity';
 import { LogoWatermark } from '../components/learn/BrandBackground';
@@ -54,6 +55,8 @@ export default function Dashboard() {
         <div className="ap-card ap-stat"><strong>{overall.done}</strong><span>Completed lectures</span></div>
         <div className="ap-card ap-stat"><strong>{upcoming.length}</strong><span>Upcoming tests (quizzes to take)</span></div>
       </div>
+
+      <DashboardLearning />
 
       {featured ? (
         <ContinueCard course={featured} state={state} />

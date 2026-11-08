@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
-import { CheckCircle2, ChevronLeft, ChevronRight, ExternalLink, Download, Bookmark } from 'lucide-react';
-import { buildTree, flatTopics, findCourse, difficultyLabel, splitQuestions } from '../../cms/model';
+import { CheckCircle2, ChevronLeft, ChevronRight, ExternalLink, Download, Bookmark, ListChecks } from 'lucide-react';
+import { buildTree, flatTopics, findCourse, difficultyLabel, splitQuestions, resourceLink } from '../../cms/model';
 import QuestionRunner from './QuestionRunner';
 import { youTubeEmbedUrl, youTubeWatchUrl } from '../../cms/youtube';
 import { parseDrive } from '../../cms/drive';
@@ -13,7 +13,7 @@ import '../../styles/hub.css';
 
 const TABS = [
   { id: 'lecture', label: 'Video lecture' },
-  { id: 'notes', label: 'Handwritten notes' },
+  { id: 'notes', label: 'Notes, revision & quiz' },
   { id: 'dpp', label: 'DPP' },
   { id: 'practice', label: 'Practice' },
   { id: 'mine', label: 'My notes' },
@@ -42,18 +42,23 @@ function Lectures({ lectures }) {
 
 function Notes({ resources }) {
   const [viewing, setViewing] = useState(null);
-  if (!resources.length) return <EmptyState title="Notes coming soon">The handwritten notes for this topic have not been published yet.</EmptyState>;
+  if (!resources.length) return <EmptyState title="Notes coming soon">The notes, revision material and quiz for this topic have not been published yet.</EmptyState>;
   return (
     <ul className="hub-res">
       {resources.map((r) => {
         const d = parseDrive(r.driveUrl);
+        const link = resourceLink(r);
+        if (!link) return null;
+        const isQuiz = r.type === 'Quiz';
         return (
           <li key={r.id} className="ap-card ap-panel">
             <h3>{r.title}</h3>
             <p className="ap-muted">{r.type}{r.updatedAt && r.updatedAt.toDate ? ` · Updated ${r.updatedAt.toDate().toLocaleDateString()}` : ''}</p>
             {r.description && <p>{r.description}</p>}
             <div className="ap-row ap-row--wrap">
-              <a className="ap-btn ap-btn--primary ap-btn--sm" href={r.driveUrl} target="_blank" rel="noopener noreferrer"><ExternalLink size={16} aria-hidden="true" /> Open in Google Drive</a>
+              {link.internal
+                ? <Link className="ap-btn ap-btn--primary ap-btn--sm" to={link.href}><ListChecks size={16} aria-hidden="true" /> Take the quiz</Link>
+                : <a className="ap-btn ap-btn--primary ap-btn--sm" href={link.href} target="_blank" rel="noopener noreferrer"><ExternalLink size={16} aria-hidden="true" /> {isQuiz ? 'Open the quiz' : d.ok ? 'Open in Google Drive' : 'Open link'}</a>}
               {d.ok && <button type="button" className="ap-btn ap-btn--ghost ap-btn--sm" aria-expanded={viewing === r.id} onClick={() => setViewing(viewing === r.id ? null : r.id)}>{viewing === r.id ? 'Hide viewer' : 'Read here'}</button>}
               {d.ok && d.downloadUrl && <a className="ap-btn ap-btn--ghost ap-btn--sm" href={d.downloadUrl} target="_blank" rel="noopener noreferrer"><Download size={16} aria-hidden="true" /> Download</a>}
             </div>

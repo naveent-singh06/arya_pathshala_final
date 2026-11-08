@@ -10,7 +10,7 @@ import '../../styles/hub.css';
 /** Step 2: the batches of one course (Class 9, Class 10, NEET, ...). */
 export default function HubCourse() {
   const { classId } = useParams();
-  const { data, enrolled, enroll, user } = useHub();
+  const { data, enrolled, enroll, user, isAdmin } = useHub();
   const course = findCourse(data, classId);
   if (!course) return <NotFound what="course" />;
   const batches = data.batches.filter((b) => b.classId === classId).sort(byOrder);
@@ -19,7 +19,10 @@ export default function HubCourse() {
       <nav className="ap-crumbs" aria-label="Breadcrumb"><Link to="/hub">All courses</Link> / <span aria-current="page">{course.title}</span></nav>
       <PageHead title={course.title} description={course.description || 'Choose a batch to start learning.'} />
       {!batches.length ? (
-        <EmptyState title="No batches yet">Batches for {course.title} will appear here as soon as your teachers publish them.</EmptyState>
+        <EmptyState title={`${course.title} content is coming soon`} action={isAdmin ? <Link className="ap-btn ap-btn--primary" to="/admin/content/batches">Create a batch</Link> : null}>
+          Nothing has been published for {course.title} yet. Batches, subjects, lectures, notes and practice will appear here after your teacher publishes them.
+          {isAdmin && ' You are an admin: add a batch, subjects, chapters and topics in the content portal, then press Publish.'}
+        </EmptyState>
       ) : (
         <div className="ap-grid-3">
           {batches.map((b) => {

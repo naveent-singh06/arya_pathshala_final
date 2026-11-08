@@ -58,3 +58,14 @@ Firestore rules were reviewed by hand, not run against the emulator or your live
 - `The email or password is not correct`: an account created with Google has no password. Use the Google button.
 - If the Vercel Preview itself asks you to log in to Vercel, Deployment Protection is on. That is a Vercel setting (Project → Settings → Deployment Protection). It is why the browser console can show `manifest.json` CORS errors; it does not stop Firebase sign-in, but visitors must pass Vercel's login first. Turn it off for a public preview only if you accept the page being public.
 - After sign-in admins go to `/dashboardadmin`, students to `/dashboard`.
+
+## Publishing one complete topic (teacher guide)
+
+1. `/admin/content/batches` → **Add batch** (pick Class 9, Class 10 or NEET).
+2. `/admin/content/subjects` → **Add subject**, and choose **Add to batch** so students can see it.
+3. `/admin/content/chapters` → **Add chapter** (set the order).
+4. `/admin/content/topics` → **Add topic** (or **Add many topics**), choose Easy / Medium / Hard.
+5. `/admin/content/lectures` → paste the YouTube link. `/admin/content/resources` → notes PDF, **Revision Material** or **Quiz** (a Drive link, any https link, or `/tests/<id>` for a quiz). `/admin/content/dpps` → DPP link.
+6. Press **Publish**. Students see it under My Courses / Batches → Subject → Chapter → Topic.
+
+**Rules change (publish `firestore.rules` again):** `resources` now accept a Google Drive link, any `https://` link (`externalUrl`) or a quiz route (`route`, only `/tests` or `/tests/<id>`). At least one link is required.
