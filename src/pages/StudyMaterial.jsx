@@ -20,6 +20,7 @@ export default function StudyMaterial() {
     <>
       <PageHead title="Notes and PDFs" description="Chapter notes and downloadable PDFs for Class 9, Class 10 and NEET." />
       <DemoNote>Demo material. Notes are chapter outlines that open inside the lecture pages. PDF files have not been uploaded yet, so those buttons are switched off until they are.</DemoNote>
+      <p className="ap-row ap-row--wrap">Looking for your teachers' published lectures, notes and DPPs? <Link className="ap-btn ap-btn--primary ap-btn--sm" to="/hub">Open the Study Hub</Link></p>
       <Filters filter={filter} />
       <div className="ap-card ap-panel" style={{ gap: 0 }}>
         <Tabs tabs={TABS} active={tab} onChange={setTab} label="Study material" />

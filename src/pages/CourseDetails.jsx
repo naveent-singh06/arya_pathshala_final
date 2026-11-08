@@ -56,6 +56,7 @@ export default function CourseDetails() {
             <li><Languages size={16} aria-hidden="true" /> {course.language}</li>
             <li><Play size={16} aria-hidden="true" /> {lectures.length} lectures</li>
           </ul>
+          <Link className="ap-btn ap-btn--primary" to={`/hub/${course.categoryId}`}>Open the Study Hub for {category.title}</Link>
         </header>
 
         {enrolled && <ContinueCard course={course} state={state} />}

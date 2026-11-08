@@ -76,7 +76,7 @@ export default function LearnLayout() {
               <BrandMark size={44} />
               <span className="ap-side__label ap-side__brand">
                 Arya Pathshala
-                <small>Dreams find wings here</small>
+                <small>Dreams Find Wings Here</small>
               </span>
             </Link>
             <button type="button" className="ap-iconbtn ap-side__close" onClick={() => setDrawer(false)} aria-label="Close menu">

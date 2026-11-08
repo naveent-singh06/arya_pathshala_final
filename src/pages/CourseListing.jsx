@@ -40,6 +40,7 @@ export default function CourseListing() {
             <h1>{category ? `${category.title} courses` : 'All courses'}</h1>
             <p>{category ? category.description : 'Every course at Arya Pathshala, for Class 9, Class 10 and NEET.'}</p>
           </div>
+          <Link className="ap-btn ap-btn--primary" to={category ? `/hub/${category.id}` : '/hub'}>Open {category ? `${category.title} ` : ''}in the Study Hub</Link>
         </header>
 
         <div className="ap-filters">

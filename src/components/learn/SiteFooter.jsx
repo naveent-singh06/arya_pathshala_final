@@ -14,7 +14,7 @@ export default function SiteFooter() {
             <BrandMark size={30} />
             <span>Arya Pathshala</span>
           </Link>
-          <p>Your Dreams, Our Guidance.</p>
+          <p>Your Dreams, Our Guidance.<br />Dreams Find Wings Here.</p>
           <SocialLinks />
         </div>
         <div>
